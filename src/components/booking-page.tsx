@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CalendarDays, Dumbbell, Flame, MapPin, Sparkles, UserRound } from "lucide-react";
+import { Bell, CalendarDays, Dumbbell, Flame, MapPin, Sparkles, UserRound } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import {
   cancelBookingRecord,
@@ -121,11 +121,14 @@ export function BookingPage() {
     return trainerMatch && intensityMatch && locationMatch;
   });
 
-  const bookingsByScheduleId = new Map(
-    snapshot.bookings
-      .filter((booking) => booking.scheduleId)
-      .map((booking) => [booking.scheduleId as string, booking])
-  );
+  const bookingsByScheduleId = snapshot.bookings.reduce((map, booking) => {
+    if (!booking.scheduleId || map.has(booking.scheduleId)) {
+      return map;
+    }
+
+    map.set(booking.scheduleId, booking);
+    return map;
+  }, new Map<string, BookingRecord>());
 
   const liveBookings = sortBySoonest(snapshot.bookings).filter((booking) => booking.status !== "cancelled");
   const recentChanges = sortBySoonest(snapshot.bookings).slice(0, 6);
@@ -194,6 +197,17 @@ export function BookingPage() {
             </span>
             <span className="status-pill">{filteredSchedules.length} classes visible</span>
           </div>
+          <div className="dashboard-actions">
+            <Link href="/dashboard" className="button button-secondary">
+              Back to dashboard
+            </Link>
+            <Link href="/settings" className="button button-secondary">
+              Notification settings
+            </Link>
+            <Link href="/workouts" className="button button-primary">
+              Open workout library
+            </Link>
+          </div>
         </div>
 
         <section className="booking-filter-bar">
@@ -239,9 +253,15 @@ export function BookingPage() {
             filteredSchedules.map((schedule) => {
               const currentBooking = bookingsByScheduleId.get(schedule.id);
               const isPast = new Date(schedule.startsAt).getTime() <= Date.now();
+              const bookingFull = schedule.isFull && !currentBooking;
               const bookKey = `book:${schedule.id}`;
               const cancelKey = currentBooking ? `cancel:${currentBooking.id}` : "";
               const attendKey = currentBooking ? `attend:${currentBooking.id}` : "";
+              const availabilityLabel = currentBooking?.status === "confirmed"
+                ? "Your spot is held"
+                : bookingFull
+                  ? "Class full"
+                  : `${schedule.openSpots} spot${schedule.openSpots === 1 ? "" : "s"} left`;
 
               return (
                 <article key={schedule.id} className="class-schedule-card">
@@ -255,7 +275,9 @@ export function BookingPage() {
                         <span className="eyebrow">{schedule.intensity}</span>
                         <h2>{schedule.title}</h2>
                       </div>
-                      <span className="status-pill">{currentBooking ? currentBooking.status.replace("-", " ") : "open"}</span>
+                      <span className={`status-pill ${bookingFull ? "disabled" : "live"}`}>
+                        {currentBooking ? currentBooking.status.replace("-", " ") : availabilityLabel}
+                      </span>
                     </div>
 
                     <p>{schedule.description}</p>
@@ -283,7 +305,11 @@ export function BookingPage() {
                       </span>
                       <span>
                         <Sparkles size={16} />
-                        Included in membership
+                        {schedule.spotsTaken}/{schedule.capacity} reserved
+                      </span>
+                      <span>
+                        <Bell size={16} />
+                        {availabilityLabel}
                       </span>
                     </div>
 
@@ -319,9 +345,15 @@ export function BookingPage() {
                           type="button"
                           className="button button-primary"
                           onClick={() => handleBook(schedule)}
-                          disabled={workingKey === bookKey}
+                          disabled={workingKey === bookKey || bookingFull}
                         >
-                          {workingKey === bookKey ? "Booking..." : currentBooking?.status === "cancelled" ? "Book again" : "Book instantly"}
+                          {workingKey === bookKey
+                            ? "Booking..."
+                            : bookingFull
+                              ? "Class full"
+                              : currentBooking?.status === "cancelled"
+                                ? "Book again"
+                                : "Book instantly"}
                         </button>
                       )}
                     </div>
@@ -400,6 +432,24 @@ export function BookingPage() {
             When you mark a class as attended, the app updates your `member_progress`, booking history, and profile totals
             so the dashboard rings and badges refresh automatically.
           </p>
+        </article>
+
+        <article className="dashboard-panel booking-sidebar-card">
+          <div className="panel-heading">
+            <h2>Next steps</h2>
+            <span className="status-pill live">journey</span>
+          </div>
+          <div className="stack-row">
+            <Link href="/settings" className="button button-secondary">
+              Enable reminders
+            </Link>
+            <Link href="/workouts" className="button button-secondary">
+              Train on demand
+            </Link>
+            <Link href="/community" className="button button-secondary">
+              Join community
+            </Link>
+          </div>
         </article>
       </aside>
     </main>

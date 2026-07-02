@@ -7,9 +7,16 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:local": "./scripts/local-run.sh dev",
     "build": "next build",
+    "build:local": "./scripts/local-run.sh build",
+    "netlify:check": "node ./scripts/check-netlify-ready.mjs",
+    "netlify:check:local": "./scripts/local-run.sh netlify-check",
     "start": "next start",
-    "lint": "next lint"
+    "start:local": "./scripts/local-run.sh start",
+    "install:local": "./scripts/local-run.sh install",
+    "lint": "next lint",
+    "lint:local": "./scripts/local-run.sh lint"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

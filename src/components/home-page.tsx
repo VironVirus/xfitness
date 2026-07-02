@@ -63,6 +63,8 @@ export function HomePage() {
             <a href="#experience">Experience</a>
             <a href="#programs">Programs</a>
             <a href="#membership">Membership</a>
+            <Link href="/workouts">Workouts</Link>
+            <Link href="/community">Community</Link>
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/book" className="button button-secondary">
               Book session
@@ -86,8 +88,11 @@ export function HomePage() {
             <Link href="/signup" className="button button-primary">
               Create member profile
             </Link>
-            <Link href="/book" className="button button-secondary">
-              Book a session
+            <Link href="/workouts" className="button button-secondary">
+              Browse workout library
+            </Link>
+            <Link href="/community" className="button button-secondary">
+              Explore community
             </Link>
           </div>
 
@@ -143,6 +148,12 @@ export function HomePage() {
             <CreditCard size={20} />
             <h3>Flutterwave-ready checkout</h3>
             <p>Members can move from session selection to local payment options with verification handled on the server.</p>
+          </article>
+
+          <article className="feature-card">
+            <Dumbbell size={20} />
+            <h3>Workouts plus community</h3>
+            <p>Video routines, favorites, challenge leaderboards, and live member discussion now live in one connected product.</p>
           </article>
 
           <article className="feature-card visual-chip-card">
@@ -304,8 +315,8 @@ export function HomePage() {
             <Link href="/dashboard" className="button button-primary">
               View dashboard
             </Link>
-            <Link href="/book" className="button button-secondary">
-              Test booking flow
+            <Link href="/workouts" className="button button-secondary">
+              Explore workouts
             </Link>
           </div>
         </div>

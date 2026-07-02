@@ -172,6 +172,9 @@ export function SettingsPage() {
           <Link href="/dashboard" className="button button-secondary">
             Back to dashboard
           </Link>
+          <Link href="/book" className="button button-secondary">
+            Book a class
+          </Link>
           <button type="button" className="button button-primary" onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : "Save settings"}
           </button>
@@ -324,6 +327,20 @@ export function SettingsPage() {
             <Bell size={18} />
           </div>
           <p className="muted">Once a browser is subscribed, notifications can be targeted to this member without changing your UI flow.</p>
+        </article>
+        <article className="dashboard-panel compact-panel">
+          <div className="panel-heading">
+            <h2>Next steps</h2>
+            <Sparkles size={18} />
+          </div>
+          <div className="stack-row">
+            <Link href="/workouts" className="button button-secondary">
+              Open library
+            </Link>
+            <Link href="/community" className="button button-secondary">
+              Join community
+            </Link>
+          </div>
         </article>
       </section>
     </main>

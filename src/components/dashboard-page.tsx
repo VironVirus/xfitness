@@ -2,9 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
-import { Activity, CalendarDays, Flame, ShieldCheck, Target, Trophy, UserRound } from "lucide-react";
+import { Activity, Bell, CalendarDays, Flame, MessageSquare, PlayCircle, ShieldCheck, Target, Trophy, UserRound } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { getDashboardSnapshot, subscribeToMemberDashboard, supabaseEnabled, type DashboardSnapshot } from "@/lib/supabase";
+import {
+  getDashboardSnapshot,
+  isGymOwner,
+  subscribeToMemberDashboard,
+  supabaseEnabled,
+  type DashboardSnapshot
+} from "@/lib/supabase";
 import { formatLongDate, formatNaira, formatShortDate } from "@/lib/utils";
 import type { BookingRecord, MemberProfile, MemberProgress } from "@/types/app";
 
@@ -238,6 +244,80 @@ export function DashboardPage() {
   const renewalReminder = getRenewalReminder(dashboardMember);
   const completedClasses = getCompletedClasses(bookings, dashboardMember);
   const latestBookings = bookings.slice(0, 5);
+  const nextUpcomingBooking = [...bookings]
+    .filter((booking) => booking.status !== "cancelled" && new Date(booking.scheduledFor).getTime() > Date.now())
+    .sort((left, right) => new Date(left.scheduledFor).getTime() - new Date(right.scheduledFor).getTime())[0];
+  const notificationsReady =
+    dashboardMember.notificationPreferences.enabled && dashboardMember.notificationPreferences.pushSubscribed;
+  const journeyCards = [
+    {
+      id: "profile",
+      eyebrow: "Profile & quiz",
+      title: "Personal profile is ready",
+      body: `Your goal is ${dashboardMember.quiz.goal.toLowerCase()} and your preferred training style is ${dashboardMember.quiz.preferredWorkoutType.toLowerCase()}.`,
+      href: "/dashboard",
+      cta: "Review dashboard",
+      done: true,
+      icon: UserRound
+    },
+    {
+      id: "notifications",
+      eyebrow: "Push reminders",
+      title: notificationsReady ? "Reminders are turned on" : "Enable nudges and reminders",
+      body: notificationsReady
+        ? "Class reminders, goal nudges, and renewal alerts can reach this member account."
+        : "Visit settings to connect browser push and store your reminder preferences.",
+      href: "/settings",
+      cta: notificationsReady ? "Adjust settings" : "Enable notifications",
+      done: notificationsReady,
+      icon: Bell
+    },
+    {
+      id: "booking",
+      eyebrow: "Book a class",
+      title: nextUpcomingBooking ? "Next coached class booked" : "Reserve your next coached session",
+      body: nextUpcomingBooking
+        ? `${nextUpcomingBooking.programName} is scheduled for ${formatLongDate(nextUpcomingBooking.scheduledFor)}.`
+        : "Open the booking studio to grab a live slot with realtime availability.",
+      href: "/book",
+      cta: nextUpcomingBooking ? "Manage bookings" : "Book now",
+      done: Boolean(nextUpcomingBooking),
+      icon: CalendarDays
+    },
+    {
+      id: "workouts",
+      eyebrow: "Workout library",
+      title: "Train between coached classes",
+      body: "Open the on-demand library to complete video routines that feed your weekly progress rings.",
+      href: "/workouts",
+      cta: "Open library",
+      done: false,
+      icon: PlayCircle
+    },
+    {
+      id: "community",
+      eyebrow: "Community",
+      title: "Join challenges and member discussion",
+      body: "Take part in challenge leaderboards, share progress socially, and post inside the live forum.",
+      href: "/community",
+      cta: "Open community",
+      done: false,
+      icon: MessageSquare
+    }
+  ];
+
+  if (isGymOwner(dashboardMember)) {
+    journeyCards.push({
+      id: "owner",
+      eyebrow: "Owner analytics",
+      title: "Owner console unlocked",
+      body: "Your account can open class demand, engagement, renewal, and revenue insights.",
+      href: "/admin",
+      cta: "Open admin dashboard",
+      done: true,
+      icon: ShieldCheck
+    });
+  }
 
   return (
     <main className="route-shell dashboard-shell">
@@ -258,6 +338,17 @@ export function DashboardPage() {
         </div>
 
         <div className="dashboard-actions">
+          {isGymOwner(member) ? (
+            <Link href="/admin" className="button button-secondary">
+              Owner console
+            </Link>
+          ) : null}
+          <Link href="/community" className="button button-secondary">
+            Community hub
+          </Link>
+          <Link href="/workouts" className="button button-secondary">
+            Workout library
+          </Link>
           <Link href="/book" className="button button-primary">
             Book new session
           </Link>
@@ -293,6 +384,41 @@ export function DashboardPage() {
           <strong>{completedClasses}</strong>
           <span>Completed classes</span>
         </article>
+      </section>
+
+      <section className="dashboard-panel">
+        <div className="panel-heading">
+          <div>
+            <h2>Member Journey</h2>
+            <p className="muted">Each step in the product now flows into the next, from setup through community momentum.</p>
+          </div>
+          <span className="status-pill live">{journeyCards.length} journey steps</span>
+        </div>
+
+        <div className="journey-grid">
+          {journeyCards.map((card) => {
+            const Icon = card.icon;
+
+            return (
+              <article key={card.id} className="journey-card">
+                <div className="journey-card-heading">
+                  <div>
+                    <span className="eyebrow">{card.eyebrow}</span>
+                    <strong>{card.title}</strong>
+                  </div>
+                  <span className={`status-pill ${card.done ? "completed" : "disabled"}`}>
+                    <Icon size={14} />
+                    {card.done ? "ready" : "next"}
+                  </span>
+                </div>
+                <p>{card.body}</p>
+                <div className="journey-card-footer">
+                  <Link href={card.href}>{card.cta}</Link>
+                </div>
+              </article>
+            );
+          })}
+        </div>
       </section>
 
       <section className="dashboard-focus-grid">

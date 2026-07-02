@@ -909,6 +909,41 @@ img {
   gap: 1.2rem;
 }
 
+.journey-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.journey-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.journey-card-heading {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.journey-card strong {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.journey-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.journey-card-footer a {
+  color: var(--highlight);
+}
+
 .dashboard-focus-grid {
   grid-template-columns: 1.15fr 0.85fr;
 }
@@ -1234,6 +1269,612 @@ img {
   border-radius: var(--radius-lg);
 }
 
+.workout-library-layout {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.workout-library-main,
+.workout-library-sidebar,
+.workout-sidebar-card,
+.recommendation-list,
+.trainer-routine-list,
+.workout-summary-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.workout-library-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem 2rem;
+}
+
+.workout-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.workout-favorites-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.workout-favorites-toggle span {
+  color: rgba(248, 244, 234, 0.86);
+}
+
+.workout-favorites-toggle input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: #c0ff4f;
+}
+
+.workout-card-grid {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.workout-card {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.workout-card-media {
+  position: relative;
+  min-height: 240px;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.workout-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  background: #000;
+  border-radius: 20px;
+}
+
+.workout-card-copy,
+.workout-card-heading,
+.workout-card-footer,
+.workout-card-status {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.workout-card-heading {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+}
+
+.workout-card-heading h2 {
+  margin: 0.2rem 0 0;
+}
+
+.workout-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.workout-meta-grid span,
+.recommendation-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--muted);
+}
+
+.workout-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.workout-chip {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.workout-card-footer {
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+
+.workout-card-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.favorite-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.favorite-chip.active {
+  background: rgba(255, 107, 44, 0.12);
+  border-color: rgba(255, 107, 44, 0.4);
+}
+
+.recommendation-card,
+.trainer-routine-card {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.recommendation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.recommendation-header strong,
+.trainer-routine-card strong {
+  display: block;
+}
+
+.recommendation-card p,
+.trainer-routine-card p {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+}
+
+.recommendation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 0.9rem;
+}
+
+.trainer-routine-card span {
+  color: var(--highlight);
+}
+
+.workout-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.empty-workout-state {
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+}
+
+.community-layout {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.community-main,
+.community-sidebar,
+.community-detail-grid,
+.community-forum-grid,
+.community-challenge-grid,
+.community-thread-compose,
+.community-thread-list-panel,
+.community-sidebar-card,
+.community-compose-fields,
+.community-thread-list,
+.community-comment-list,
+.community-leaderboard-panel,
+.community-share-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.community-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem 2rem;
+}
+
+.community-challenge-card {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.community-challenge-card.selected {
+  border-color: rgba(255, 107, 44, 0.44);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.24);
+}
+
+.community-challenge-select {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.community-challenge-media {
+  position: relative;
+  min-height: 230px;
+}
+
+.community-challenge-media img {
+  object-fit: cover;
+  filter: brightness(0.78);
+}
+
+.community-challenge-copy {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+.community-challenge-heading,
+.community-thread-card-heading {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.community-challenge-heading h2 {
+  margin: 0.2rem 0 0;
+}
+
+.community-challenge-copy p,
+.community-thread-card p,
+.community-selected-thread p,
+.community-comment-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.community-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.community-meta-grid span,
+.community-thread-meta {
+  color: var(--muted);
+}
+
+.community-meta-grid span,
+.community-progress-caption,
+.community-thread-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+}
+
+.community-meta-grid span {
+  align-items: center;
+}
+
+.community-progress-shell {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.community-progress-bar {
+  overflow: hidden;
+  height: 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.community-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--highlight) 100%);
+}
+
+.community-progress-caption {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.community-progress-caption span {
+  color: var(--muted);
+}
+
+.community-challenge-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.9rem;
+  align-items: end;
+}
+
+.community-progress-input {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.community-progress-input span {
+  color: rgba(248, 244, 234, 0.86);
+  font-size: 0.94rem;
+}
+
+.community-progress-input input,
+.community-compose-fields select,
+.community-compose-fields input,
+.community-compose-fields textarea {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+}
+
+.community-detail-grid,
+.community-forum-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.community-leaderboard-list,
+.community-thread-list,
+.community-comment-list {
+  margin-top: 0.2rem;
+}
+
+.community-leaderboard-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.community-share-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.2rem;
+}
+
+.community-thread-card {
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+}
+
+.community-thread-card.active {
+  border-color: rgba(255, 107, 44, 0.44);
+  background: rgba(255, 107, 44, 0.08);
+}
+
+.community-thread-meta {
+  font-size: 0.92rem;
+}
+
+.community-selected-thread,
+.community-comment-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.community-selected-thread span,
+.community-comment-card span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.admin-layout,
+.admin-summary-grid,
+.admin-analytics-grid,
+.admin-list,
+.admin-kpi-grid,
+.admin-trend-list,
+.admin-renewal-grid,
+.admin-member-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-layout {
+  gap: 1.2rem;
+}
+
+.admin-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem 2rem;
+}
+
+.admin-summary-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.admin-summary-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.2rem;
+  border-radius: var(--radius-md);
+}
+
+.admin-summary-card strong,
+.admin-member-card strong {
+  display: block;
+  font-size: 1.4rem;
+}
+
+.admin-summary-card span,
+.admin-member-card span,
+.admin-row-copy span,
+.admin-row-visual small,
+.admin-trend-label span {
+  color: var(--muted);
+}
+
+.admin-analytics-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.admin-panel {
+  gap: 1rem;
+}
+
+.admin-kpi-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-row {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.95rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-row-copy,
+.admin-row-visual {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-row-visual {
+  justify-items: end;
+}
+
+.admin-mini-bar,
+.admin-trend-bars {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-mini-bar {
+  height: 0.7rem;
+}
+
+.admin-mini-bar span,
+.admin-trend-bars span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.admin-mini-bar span,
+.admin-trend-attended,
+.admin-trend-login {
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
+}
+
+.admin-trend-list {
+  gap: 0.9rem;
+}
+
+.admin-trend-row {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-trend-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.admin-trend-bars {
+  position: relative;
+  height: 0.82rem;
+}
+
+.admin-trend-booked {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.admin-trend-attended {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+
+.admin-trend-bars-triple {
+  height: auto;
+  padding: 0.35rem;
+  display: grid;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-trend-bars-triple span {
+  min-height: 0.42rem;
+}
+
+.admin-trend-booking {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.18) 100%);
+}
+
+.admin-trend-challenge {
+  background: linear-gradient(90deg, rgba(192, 255, 79, 0.95) 0%, rgba(192, 255, 79, 0.5) 100%);
+}
+
+.admin-list.compact {
+  margin-top: 0.2rem;
+}
+
+.admin-renewal-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-member-card {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .settings-shell,
 .settings-panel,
 .settings-toggle-list,
@@ -1340,11 +1981,18 @@ img {
   .dashboard-focus-grid,
   .dashboard-content-grid,
   .dashboard-summary-grid,
+  .journey-grid,
   .settings-note-grid,
   .booking-layout,
+  .workout-library-layout,
+  .community-layout,
+  .admin-analytics-grid,
+  .admin-renewal-grid,
   .progress-ring-grid,
   .booking-layout,
   .split-showcase,
+  .community-detail-grid,
+  .community-forum-grid,
   .auth-shell {
     grid-template-columns: 1fr;
   }
@@ -1355,6 +2003,9 @@ img {
 
   .section-heading-row,
   .dashboard-hero,
+  .workout-library-hero,
+  .community-hero,
+  .admin-hero,
   .cta-panel,
   .auth-heading-row {
     flex-direction: column;
@@ -1362,9 +2013,22 @@ img {
   }
 
   .class-schedule-card,
+  .workout-card,
   .booking-filter-bar,
+  .workout-filter-bar,
+  .community-meta-grid,
+  .community-share-grid,
+  .community-challenge-actions,
+  .community-thread-card-heading,
+  .admin-summary-grid,
+  .admin-kpi-grid,
+  .admin-row,
   .class-schedule-meta,
-  .class-schedule-actions {
+  .class-schedule-actions,
+  .workout-meta-grid,
+  .workout-card-footer,
+  .workout-card-heading,
+  .workout-summary-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1391,7 +2055,9 @@ img {
   .hero-stats,
   .plan-picker,
   .summary-meta,
-  .preview-grid {
+  .preview-grid,
+  .workout-summary-grid,
+  .admin-renewal-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1407,6 +2073,10 @@ img {
 
   .media-panel {
     min-height: 440px;
+  }
+
+  .community-challenge-media {
+    min-height: 200px;
   }
 }
 

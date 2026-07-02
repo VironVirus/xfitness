@@ -1,0 +1,514 @@
+{
+  "meta": {
+    "title": "Xfitness Webapp Guide",
+    "shortTitle": "Xfitness Guide",
+    "subtitle": "A mobile-friendly walkthrough of the member journey, community features, live sync, and owner analytics",
+    "audience": "Anyone learning how the Xfitness website works",
+    "topicSlug": "xfitness-webapp-guide-mobile",
+    "projectRoot": "/Users/mac/Desktop/xfitness"
+  },
+  "navSections": [
+    { "id": "overview", "label": "Overview" },
+    { "id": "member", "label": "Member" },
+    { "id": "training", "label": "Training" },
+    { "id": "community", "label": "Community" },
+    { "id": "owner", "label": "Owner" },
+    { "id": "data", "label": "Data" }
+  ],
+  "pages": [
+    {
+      "id": "cover",
+      "layout": "cover",
+      "nav": "overview",
+      "eyebrow": "Product Guide",
+      "title": "Xfitness brings discovery, training, community, and owner insight into one web app.",
+      "body": "This guide explains what each part of the website does, how members move through it, and how Supabase keeps the experience connected behind the scenes.",
+      "image": "public/media/facility-lounge.png",
+      "chips": ["Next.js", "Supabase", "Realtime", "OneSignal", "Flutterwave-ready"]
+    },
+    {
+      "id": "map",
+      "layout": "overview",
+      "nav": "overview",
+      "eyebrow": "How The Site Is Organized",
+      "title": "Everything in the product fits into eight linked areas.",
+      "body": "A visitor starts with the brand story, becomes a member through sign-up, and then moves through training, community, reminders, and analytics without switching tools.",
+      "cards": [
+        {
+          "title": "Landing page",
+          "route": "/",
+          "body": "Brand story, membership plans, class programs, and entry points into the main app."
+        },
+        {
+          "title": "Account access",
+          "route": "/signup and /login",
+          "body": "Email sign-up, sign-in, and a short fitness quiz that shapes the member profile."
+        },
+        {
+          "title": "Dashboard",
+          "route": "/dashboard",
+          "body": "Progress rings, badges, bookings, renewal reminders, and the next actions a member should take."
+        },
+        {
+          "title": "Class booking",
+          "route": "/book",
+          "body": "Realtime availability, filters, booking, cancellation, and attendance tracking."
+        },
+        {
+          "title": "Workout library",
+          "route": "/workouts",
+          "body": "On-demand video routines, trainer collections, favorites, completions, and recommendations."
+        },
+        {
+          "title": "Community hub",
+          "route": "/community",
+          "body": "Challenges, leaderboards, social sharing, discussion threads, and live comments."
+        },
+        {
+          "title": "Notification settings",
+          "route": "/settings",
+          "body": "Push opt-in, reminder categories, and stored notification preferences."
+        },
+        {
+          "title": "Owner analytics",
+          "route": "/admin",
+          "body": "Popularity, attendance, engagement, revenue, and renewal insight for gym owners only."
+        }
+      ]
+    },
+    {
+      "id": "journey",
+      "layout": "journey",
+      "nav": "overview",
+      "eyebrow": "Member Journey",
+      "title": "A member can move from sign-up to progress tracking without leaving the app.",
+      "body": "The product is designed as one connected path. Each step feeds the next one, so actions in one area update the rest of the experience automatically.",
+      "image": "public/media/group-energy.png",
+      "steps": [
+        "Sign up with email and save the fitness quiz.",
+        "Open a personalized dashboard after login.",
+        "Book a class from the live schedule.",
+        "Enable push reminders in settings.",
+        "Complete coached sessions and update progress.",
+        "Use the workout library between booked classes.",
+        "Join challenges, share progress, and comment live.",
+        "Let owners review the health of the business in analytics."
+      ]
+    },
+    {
+      "id": "home",
+      "layout": "feature",
+      "nav": "overview",
+      "eyebrow": "Landing Experience",
+      "title": "The landing page sells the club and points people to the right next step.",
+      "body": "The home screen is both a brand page and a navigation hub. It uses a cinematic slideshow, premium club visuals, and direct links into the member product.",
+      "image": "public/media/facility-lounge.png",
+      "route": "/",
+      "bullets": [
+        "Hero visuals rotate automatically to create a premium first impression.",
+        "Primary actions send people to sign-up, workouts, community, dashboard, and booking.",
+        "Membership plans and program cards explain what members can buy and what each class offers."
+      ],
+      "callouts": [
+        {
+          "label": "Best for",
+          "value": "First-time visitors",
+          "body": "People who want to discover the brand before becoming members."
+        },
+        {
+          "label": "Main promise",
+          "value": "One joined-up experience",
+          "body": "The site sells the gym and runs the digital member journey in the same place."
+        },
+        {
+          "label": "Quick use",
+          "value": "Browse or convert",
+          "body": "Use this page to explore plans, compare programs, or create an account."
+        }
+      ]
+    },
+    {
+      "id": "auth",
+      "layout": "feature",
+      "nav": "member",
+      "eyebrow": "Sign-Up And Login",
+      "title": "Account creation saves the fitness quiz and personalizes the rest of the experience.",
+      "body": "The sign-up form collects the member's name, email, password, fitness goal, and preferred workout style. Those answers become the profile that powers the dashboard, recommendations, and reminders.",
+      "image": "public/media/member-profile.png",
+      "route": "/signup and /login",
+      "bullets": [
+        "Login sends returning members straight to the dashboard.",
+        "Sign-up stores quiz answers alongside the member profile in Supabase Auth and Postgres.",
+        "If email confirmation is enabled, the app can wait for confirmation before opening the dashboard."
+      ],
+      "callouts": [
+        {
+          "label": "Quiz fields",
+          "value": "Goal + workout type",
+          "body": "These choices shape recommendations and dashboard messaging."
+        },
+        {
+          "label": "Auth layer",
+          "value": "Supabase Auth",
+          "body": "Email and password access is handled through Supabase with profile sync on top."
+        },
+        {
+          "label": "How to use it",
+          "value": "Create profile first",
+          "body": "Members must sign up or sign in before booking, community, or settings are unlocked."
+        }
+      ]
+    },
+    {
+      "id": "dashboard",
+      "layout": "feature",
+      "nav": "member",
+      "eyebrow": "Personal Dashboard",
+      "title": "The dashboard becomes the member's control room after login.",
+      "body": "Once a member is authenticated, the dashboard pulls together profile data, weekly progress, achievements, upcoming bookings, renewal status, and links to the next best actions.",
+      "image": "public/media/hero-still.png",
+      "route": "/dashboard",
+      "bullets": [
+        "Progress rings show weekly workouts completed and calories burned against goals.",
+        "Achievement badges unlock as completed classes increase.",
+        "Recent bookings, the next coached class, and reminder status are surfaced in one place."
+      ],
+      "callouts": [
+        {
+          "label": "Track",
+          "value": "Rings and badges",
+          "body": "Weekly momentum becomes visible instead of hidden in separate screens."
+        },
+        {
+          "label": "Act next",
+          "value": "Journey cards",
+          "body": "The page nudges members toward settings, booking, workouts, and community."
+        },
+        {
+          "label": "Owner bonus",
+          "value": "Admin shortcut",
+          "body": "Gym owner accounts also get a path into the analytics dashboard."
+        }
+      ]
+    },
+    {
+      "id": "booking",
+      "layout": "feature",
+      "nav": "training",
+      "eyebrow": "Booking Studio",
+      "title": "Class booking stays live because availability is tied to the schedule table.",
+      "body": "The booking page reads class schedules from Supabase Postgres, shows available seats, and updates the schedule as bookings are created or cancelled.",
+      "image": "public/media/strength-zone.png",
+      "route": "/book",
+      "bullets": [
+        "Members can filter classes by trainer, intensity, and location.",
+        "Each class shows capacity, spots taken, open spots, and whether the class is full.",
+        "After a member attends a class, the dashboard progress refreshes automatically."
+      ],
+      "callouts": [
+        {
+          "label": "Live controls",
+          "value": "Book, cancel, attend",
+          "body": "The same screen handles reservations, cancellations, and attendance updates."
+        },
+        {
+          "label": "Realtime value",
+          "value": "True seat count",
+          "body": "Capacity rules stop overbooking and keep open spots accurate."
+        },
+        {
+          "label": "How to use it",
+          "value": "Reserve early",
+          "body": "Members can quickly see which coach, location, and intensity match their plan."
+        }
+      ]
+    },
+    {
+      "id": "notifications",
+      "layout": "feature",
+      "nav": "member",
+      "eyebrow": "Settings And Reminders",
+      "title": "Reminder settings decide which nudges the member receives.",
+      "body": "The settings page lets a signed-in member control class reminders, goal nudges, membership alerts, special event broadcasts, and browser push delivery.",
+      "image": "public/media/facility-lounge.png",
+      "route": "/settings",
+      "bullets": [
+        "A master switch turns notifications on or off for the account.",
+        "Members can choose whether they want class reminders, goal nudges, renewal alerts, and special events.",
+        "Push opt-in and opt-out are handled through OneSignal when the app ID is configured."
+      ],
+      "callouts": [
+        {
+          "label": "Stored in",
+          "value": "Profile preferences",
+          "body": "Notification choices live inside the member profile and travel with the account."
+        },
+        {
+          "label": "Sent by",
+          "value": "Edge Function",
+          "body": "Supabase functions read those settings before sending any reminder."
+        },
+        {
+          "label": "How to use it",
+          "value": "Enable push once",
+          "body": "Members should visit settings early so booked classes can trigger reminders later."
+        }
+      ]
+    },
+    {
+      "id": "workouts",
+      "layout": "feature",
+      "nav": "training",
+      "eyebrow": "Workout Library",
+      "title": "On-demand routines keep training moving between coached classes.",
+      "body": "The workout library gives members video-based routines they can complete at home or in the gym. It also lets them favorite workouts and follow trainer-specific routine collections.",
+      "image": "public/media/group-energy.png",
+      "route": "/workouts",
+      "bullets": [
+        "Workouts can be filtered by category, trainer, intensity, and favorites only.",
+        "Each routine shows duration, calories, goal, equipment, and focus tags.",
+        "Finishing a workout updates the member's weekly progress in Supabase."
+      ],
+      "callouts": [
+        {
+          "label": "Content type",
+          "value": "Video routines",
+          "body": "This section is built for guided training outside the booked class timetable."
+        },
+        {
+          "label": "Trainer view",
+          "value": "Routine groups",
+          "body": "Members can see how many workouts each trainer offers and what they focus on."
+        },
+        {
+          "label": "How to use it",
+          "value": "Train between classes",
+          "body": "Members can keep streaks and calorie goals moving even on non-class days."
+        }
+      ]
+    },
+    {
+      "id": "recommendations",
+      "layout": "feature",
+      "nav": "training",
+      "eyebrow": "Smarter Suggestions",
+      "title": "Favorites and completions shape what the library recommends next.",
+      "body": "Recommendations are not random. The app looks at the member's goal, preferred workout type, saved trainers, and favorite tags to rank the most relevant routines.",
+      "image": "public/media/women-sculpt.png",
+      "route": "/workouts",
+      "bullets": [
+        "Goal words and workout-type keywords are matched against each routine's tags.",
+        "Favoriting a coach increases the chance that more routines from that trainer appear.",
+        "New or incomplete routines can be promoted to round out the member's weekly mix."
+      ],
+      "callouts": [
+        {
+          "label": "Signals used",
+          "value": "Goal, tags, trainers",
+          "body": "The app combines profile answers with workout behavior to score relevance."
+        },
+        {
+          "label": "Member value",
+          "value": "Less searching",
+          "body": "Good suggestions help members act faster instead of scrolling through every video."
+        },
+        {
+          "label": "Progress effect",
+          "value": "Completion sync",
+          "body": "Every completed routine also pushes the weekly rings forward."
+        }
+      ]
+    },
+    {
+      "id": "challenges",
+      "layout": "feature",
+      "nav": "community",
+      "eyebrow": "Challenges And Leaderboards",
+      "title": "Community challenges turn progress into public momentum.",
+      "body": "Members can join featured challenges like a 30-day plank challenge, log progress, and watch the leaderboard update as entries change.",
+      "image": "public/media/group-energy.png",
+      "route": "/community",
+      "bullets": [
+        "Each challenge has a title, metric, target, duration, share hashtag, and prompt.",
+        "Joining creates a member progress record for that challenge.",
+        "Leaderboard order is based on progress first and update time second."
+      ],
+      "callouts": [
+        {
+          "label": "Example event",
+          "value": "30-day plank challenge",
+          "body": "A member can join, enter a new hold time, and move up the ranking board."
+        },
+        {
+          "label": "Motivation layer",
+          "value": "Visible progress",
+          "body": "Public movement on the board encourages repeat check-ins and friendly competition."
+        },
+        {
+          "label": "How to use it",
+          "value": "Log often",
+          "body": "More frequent updates keep the leaderboard and streak data fresh."
+        }
+      ]
+    },
+    {
+      "id": "forum",
+      "layout": "feature",
+      "nav": "community",
+      "eyebrow": "Discussion And Social Sharing",
+      "title": "Live discussion and social sharing keep the community active between workouts.",
+      "body": "The community area is more than a leaderboard. Members can open discussion threads, reply in comments, and prepare captions for Instagram or TikTok.",
+      "image": "public/media/hero-still.png",
+      "route": "/community",
+      "bullets": [
+        "Discussion categories include General, Challenges, Social, Recovery, and Wins.",
+        "Threads and comments update through Supabase Realtime subscriptions.",
+        "Social sharing copies a ready-made caption and opens Instagram or TikTok in a new tab."
+      ],
+      "callouts": [
+        {
+          "label": "Live layer",
+          "value": "Supabase Realtime",
+          "body": "New threads and comments can appear without a full page refresh."
+        },
+        {
+          "label": "Share flow",
+          "value": "Caption + platform",
+          "body": "The app prepares the message, then sends the member to finish the post on the selected network."
+        },
+        {
+          "label": "How to use it",
+          "value": "Post wins and tips",
+          "body": "Members can keep momentum high by sharing progress, questions, and recovery advice."
+        }
+      ]
+    },
+    {
+      "id": "admin",
+      "layout": "feature",
+      "nav": "owner",
+      "eyebrow": "Owner Dashboard",
+      "title": "Only owner accounts can open the performance view for the business.",
+      "body": "The admin dashboard is locked behind a Supabase Auth role and gives gym owners one place to monitor the health of the club.",
+      "image": "public/media/facility-lounge.png",
+      "route": "/admin",
+      "bullets": [
+        "Summary cards highlight members, active accounts, recent logins, bookings, revenue, and renewals due.",
+        "Class popularity and attendance trends show which programs are driving demand.",
+        "Engagement, revenue, and membership renewal sections help the owner act before issues grow."
+      ],
+      "callouts": [
+        {
+          "label": "Protected by",
+          "value": "gym_owner role",
+          "body": "The route opens only when the signed-in account has the correct app metadata role."
+        },
+        {
+          "label": "Best use",
+          "value": "Weekly review",
+          "body": "Owners can quickly spot strong classes, weaker engagement, and renewals that need follow-up."
+        },
+        {
+          "label": "What it answers",
+          "value": "Demand, churn, money",
+          "body": "The screen turns raw activity into decisions about operations and growth."
+        }
+      ]
+    },
+    {
+      "id": "dataflow",
+      "layout": "diagram",
+      "nav": "data",
+      "eyebrow": "How Everything Connects",
+      "title": "Supabase connects auth, bookings, progress, community, and analytics.",
+      "body": "The app uses Supabase as the center of truth. Member actions write into Postgres tables, subscriptions pull fresh data back into the UI, and the owner dashboard reads the same shared source.",
+      "image": "public/media/strength-zone.png",
+      "nodes": [
+        {
+          "title": "Auth and profiles",
+          "body": "Sign-up and login create the member identity, profile, quiz, and role information."
+        },
+        {
+          "title": "Bookings and schedules",
+          "body": "Class reservations update bookings and adjust the live seat count in class schedules."
+        },
+        {
+          "title": "Progress and workouts",
+          "body": "Completed classes and workout videos increase weekly workout and calorie totals."
+        },
+        {
+          "title": "Challenges and forum",
+          "body": "Community progress, threads, and comments feed the live social layer."
+        },
+        {
+          "title": "Analytics and reminders",
+          "body": "Owner insight and push notifications both read the same stored activity data."
+        }
+      ],
+      "bullets": [
+        "Profiles, bookings, workout activity, challenge progress, and login activity each live in dedicated tables.",
+        "Notification logs prevent the same reminder from being sent repeatedly.",
+        "Realtime subscriptions refresh dashboards, booking views, workout activity, and community updates."
+      ]
+    },
+    {
+      "id": "live-mode",
+      "layout": "feature",
+      "nav": "data",
+      "eyebrow": "Preview Mode And Live Mode",
+      "title": "The app can preview safely in demo mode and expand into live services later.",
+      "body": "Xfitness is designed to stay usable even before every service is configured. That makes it easier to preview flows during setup and then switch into a live environment when keys are ready.",
+      "image": "public/media/mobility-reset.png",
+      "route": "Environment setup",
+      "bullets": [
+        "Without Supabase keys, the app uses demo storage so major flows can still be tested.",
+        "Without OneSignal, members can still save notification preferences even though browser push stays inactive.",
+        "Without Flutterwave keys, bookings still work in demo mode and checkout remains in setup state."
+      ],
+      "callouts": [
+        {
+          "label": "Live add-ons",
+          "value": "Supabase, OneSignal, Flutterwave",
+          "body": "Each service can be connected when the project is ready for production behavior."
+        },
+        {
+          "label": "Owner setup note",
+          "value": "Role metadata matters",
+          "body": "A gym owner must have the gym_owner role in Supabase Auth app metadata to unlock analytics."
+        },
+        {
+          "label": "Why it helps",
+          "value": "Safer rollout",
+          "body": "The team can preview the product before fully connecting payments, push, and production data."
+        }
+      ]
+    },
+    {
+      "id": "checklist",
+      "layout": "checklist",
+      "nav": "data",
+      "eyebrow": "Daily Use",
+      "title": "A short routine helps members and owners get value from the app every day.",
+      "body": "The product works best when each role follows a simple rhythm. Members focus on progress and participation. Owners focus on demand, engagement, and renewals.",
+      "image": "public/media/group-energy.png",
+      "memberTasks": [
+        "Create or sign in to a profile and confirm the dashboard looks right.",
+        "Book the next class before popular time slots fill up.",
+        "Finish at least one library workout on non-class days.",
+        "Enable reminders in settings so booked sessions are not missed.",
+        "Join a challenge and log progress or comment in the forum."
+      ],
+      "ownerTasks": [
+        "Open the admin dashboard each week to review demand and attendance.",
+        "Watch engagement and challenge activity to see whether members are staying active.",
+        "Check renewals due soon and past-due members before churn grows.",
+        "Use class popularity and revenue insight to decide where programming should expand."
+      ],
+      "supportNotes": [
+        "Members start on the landing page, sign up, then live mostly in the dashboard, booking, workouts, and community.",
+        "Owners still use the member flow, but they also unlock the admin console once the role is set.",
+        "The strongest experience appears when Supabase, OneSignal, and class schedule data are fully connected."
+      ]
+    }
+  ]
+}

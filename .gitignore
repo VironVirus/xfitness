@@ -1,6 +1,8 @@
 .next
 node_modules
 out
+output
+outputs
 dist
 .env.local
 .env.production
@@ -10,6 +12,8 @@ dist
 dev.log
 preview-*.png
 generated-contact-sheet.png
+.local
+.npm-cache
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
