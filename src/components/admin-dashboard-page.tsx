@@ -1,30 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { BarChart3, CalendarClock, Crown, DollarSign, ShieldAlert, TrendingUp, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  BarChart3,
-  CalendarClock,
-  Crown,
-  DollarSign,
-  LineChart,
-  ShieldAlert,
-  Sparkles,
-  Target,
-  TrendingUp,
-  UserRound,
-  Users,
-  Zap
-} from "lucide-react";
+import { LazySection } from "@/components/lazy-section";
 import { useAuth } from "@/context/auth-context";
 import {
   getAdminDashboardSnapshot,
   isGymOwner,
   subscribeToAdminDashboard,
-  supabaseEnabled,
   type AdminDashboardSnapshot
 } from "@/lib/supabase";
-import { formatLongDate, formatNaira, formatShortDate } from "@/lib/utils";
+import { formatNaira, formatShortDate } from "@/lib/utils";
 
 function getBarWidth(value: number, max: number) {
   if (max <= 0) {
@@ -37,7 +24,6 @@ function getBarWidth(value: number, max: number) {
 export function AdminDashboardPage() {
   const { member, loading } = useAuth();
   const [snapshot, setSnapshot] = useState<AdminDashboardSnapshot | null>(null);
-  const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -49,8 +35,6 @@ export function AdminDashboardPage() {
     let active = true;
 
     const loadAdminDashboard = async () => {
-      setLoadingData(true);
-
       try {
         const nextSnapshot = await getAdminDashboardSnapshot(member);
         if (!active) {
@@ -64,11 +48,7 @@ export function AdminDashboardPage() {
           return;
         }
 
-        setError(dashboardError instanceof Error ? dashboardError.message : "Unable to load owner analytics right now.");
-      } finally {
-        if (active) {
-          setLoadingData(false);
-        }
+        setError(dashboardError instanceof Error ? dashboardError.message : "Unable to load owner analytics.");
       }
     };
 
@@ -85,16 +65,15 @@ export function AdminDashboardPage() {
   }, [member]);
 
   if (loading) {
-    return <main className="route-shell centered-copy">Loading owner access...</main>;
+    return <main className="page page-width centered-state">Loading admin...</main>;
   }
 
   if (!member) {
     return (
-      <main className="route-shell centered-copy">
-        <span className="eyebrow">Admin Dashboard</span>
-        <h1>Sign in with your gym owner account to open the admin console.</h1>
-        <p>Owner analytics are protected behind Supabase Auth, so the route only opens after login.</p>
-        <div className="stack-row">
+      <main className="page page-width centered-state">
+        <span className="eyebrow">Admin</span>
+        <h1 className="page-title">Sign in with a gym owner account.</h1>
+        <div className="action-row">
           <Link href="/login" className="button button-primary">
             Sign in
           </Link>
@@ -108,24 +87,16 @@ export function AdminDashboardPage() {
 
   if (!isGymOwner(member)) {
     return (
-      <main className="route-shell centered-copy">
-        <span className="eyebrow">Admin Dashboard</span>
-        <h1>This account is not allowed into the owner console.</h1>
-        <p>Give the account a Supabase Auth app metadata role of `gym_owner`, then sign in again to unlock admin analytics.</p>
-        <div className="stack-row">
-          <Link href="/dashboard" className="button button-primary">
-            Back to member dashboard
-          </Link>
-          <Link href="/" className="button button-secondary">
-            Back home
-          </Link>
-        </div>
+      <main className="page page-width centered-state">
+        <span className="eyebrow">Admin</span>
+        <h1 className="page-title">This account cannot open this page.</h1>
+        <p className="muted-text">Use an owner account.</p>
       </main>
     );
   }
 
   if (!snapshot) {
-    return <main className="route-shell centered-copy">Loading owner insights...</main>;
+    return <main className="page page-width centered-state">Loading analytics...</main>;
   }
 
   const classMax = Math.max(...snapshot.classPopularity.map((item) => item.bookingsCount), 1);
@@ -133,340 +104,227 @@ export function AdminDashboardPage() {
     ...snapshot.attendanceTrends.map((item) => Math.max(item.bookedCount, item.attendedCount)),
     1
   );
-  const engagementMax = Math.max(
-    ...snapshot.engagement.trend.map((item) => Math.max(item.loginCount, item.bookingCount, item.challengeCheckIns)),
-    1
-  );
 
   return (
-    <main className="route-shell admin-layout">
-      <section className="admin-hero">
-        <div>
-          <span className="eyebrow">Owner Console</span>
-          <h1>The operating view for class demand, member momentum, renewals, and revenue.</h1>
-          <p className="section-copy">
-            Welcome back, {member.fullName.split(" ")[0]}. This dashboard pulls booking, login, challenge, and member
-            renewal data from Supabase Postgres and stays fresh through realtime subscriptions.
-          </p>
-          <div className="dashboard-status-row">
-            <span className={`status-pill ${supabaseEnabled ? "live" : "disabled"}`}>
-              {supabaseEnabled ? (loadingData ? "syncing owner analytics" : "realtime from supabase") : "demo fallback"}
-            </span>
-            <span className="status-pill live">
-              <Crown size={14} />
-              gym owner
-            </span>
-          </div>
-        </div>
-
-        <div className="dashboard-actions">
-          <Link href="/dashboard" className="button button-secondary">
-            Member dashboard
-          </Link>
-          <Link href="/book" className="button button-secondary">
-            Booking studio
-          </Link>
-          <Link href="/community" className="button button-primary">
-            Community hub
-          </Link>
-        </div>
-      </section>
-
-      {error ? <p className="form-error">{error}</p> : null}
-
-      <section className="admin-summary-grid">
-        <article className="dashboard-panel admin-summary-card">
-          <Users size={20} />
-          <strong>{snapshot.summary.totalMembers}</strong>
-          <span>Total tracked members</span>
-        </article>
-        <article className="dashboard-panel admin-summary-card">
-          <Sparkles size={20} />
-          <strong>{snapshot.summary.activeMembers}</strong>
-          <span>Members in good standing</span>
-        </article>
-        <article className="dashboard-panel admin-summary-card">
-          <UserRound size={20} />
-          <strong>{snapshot.summary.uniqueLogins7d}</strong>
-          <span>Unique member logins in 7 days</span>
-        </article>
-        <article className="dashboard-panel admin-summary-card">
-          <BarChart3 size={20} />
-          <strong>{snapshot.summary.bookings30d}</strong>
-          <span>Bookings created in 30 days</span>
-        </article>
-        <article className="dashboard-panel admin-summary-card">
-          <DollarSign size={20} />
-          <strong>{formatNaira(snapshot.summary.collectedRevenue30d)}</strong>
-          <span>Collected revenue in 30 days</span>
-        </article>
-        <article className="dashboard-panel admin-summary-card">
-          <CalendarClock size={20} />
-          <strong>{snapshot.summary.renewalsDue7d}</strong>
-          <span>Renewals due in 7 days</span>
-        </article>
-      </section>
-
-      <section className="admin-analytics-grid">
-        <article className="dashboard-panel admin-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Class popularity</h2>
-              <p className="muted">Rolling 30-day demand by program, attendance rate, and paid revenue.</p>
+    <main className="page page-width page-stack">
+      <LazySection className="surface hero-surface page-stack" delay={80}>
+        <div className="hero-grid compact-hero-grid">
+          <div className="card-stack">
+            <span className="eyebrow">Owner dashboard</span>
+            <h1 className="page-title">Operations view</h1>
+            <p className="page-copy">A quick view of members, classes, and revenue.</p>
+            <div className="chip-row">
+              <span className="chip chip-accent">
+                <Crown size={14} />
+                Gym owner
+              </span>
             </div>
-            <span className="status-pill live">top classes</span>
           </div>
 
-          <div className="admin-list">
+          <div className="action-row">
+            <Link href="/dashboard" className="button button-secondary">
+              Member view
+            </Link>
+            <Link href="/book" className="button button-primary">
+              Booking
+            </Link>
+          </div>
+        </div>
+
+        {error ? <p className="message message-error">{error}</p> : null}
+
+        <div className="surface-grid surface-grid-3">
+          <article className="metric-card">
+            <Users size={18} />
+            <strong className="metric-value">{snapshot.summary.totalMembers}</strong>
+            <span className="metric-label">Members</span>
+          </article>
+          <article className="metric-card">
+            <DollarSign size={18} />
+            <strong className="metric-value">{formatNaira(snapshot.summary.collectedRevenue30d)}</strong>
+            <span className="metric-label">30-day revenue</span>
+          </article>
+          <article className="metric-card">
+            <CalendarClock size={18} />
+            <strong className="metric-value">{snapshot.summary.renewalsDue7d}</strong>
+            <span className="metric-label">Renewals due</span>
+          </article>
+        </div>
+      </LazySection>
+
+      <LazySection className="surface-grid surface-grid-2" delay={120}>
+        <section className="surface card-stack">
+          <div className="section-heading split-heading">
+            <div>
+              <span className="eyebrow">Classes</span>
+              <h2 className="section-title">Popularity</h2>
+            </div>
+            <BarChart3 size={18} />
+          </div>
+
+          <div className="list-stack">
             {snapshot.classPopularity.length ? (
               snapshot.classPopularity.map((item) => (
-                <div key={item.programId} className="admin-row">
-                  <div className="admin-row-copy">
+                <div key={item.programId} className="analytics-row">
+                  <div className="analytics-copy">
                     <strong>{item.programName}</strong>
-                    <span>
-                      {item.bookingsCount} bookings · {item.attendanceRate}% attendance · {formatNaira(item.revenue)}
-                    </span>
+                    <p className="muted-text">
+                      {item.bookingsCount} bookings • {item.attendanceRate}% attendance • {formatNaira(item.revenue)}
+                    </p>
                   </div>
-                  <div className="admin-row-visual">
-                    <div className="admin-mini-bar">
-                      <span style={{ width: getBarWidth(item.bookingsCount, classMax) }} />
-                    </div>
-                    <small>{item.lastBookedAt ? `Last booking ${formatShortDate(item.lastBookedAt)}` : "No recent bookings"}</small>
+                  <div className="analytics-bar">
+                    <span style={{ width: getBarWidth(item.bookingsCount, classMax) }} />
                   </div>
                 </div>
               ))
             ) : (
-              <p className="muted">Class demand will appear here once bookings start landing in Supabase.</p>
+              <p className="muted-text">No class data yet.</p>
             )}
           </div>
-        </article>
+        </section>
 
-        <article className="dashboard-panel admin-panel">
-          <div className="panel-heading">
+        <section className="surface card-stack">
+          <div className="section-heading split-heading">
             <div>
-              <h2>Attendance trend</h2>
-              <p className="muted">Booked versus attended sessions across the last 10 days.</p>
+              <span className="eyebrow">Attendance</span>
+              <h2 className="section-title">Recent trend</h2>
             </div>
-            <span className="status-pill">
-              <LineChart size={14} />
-              daily view
-            </span>
+            <TrendingUp size={18} />
           </div>
 
-          <div className="admin-trend-list">
+          <div className="list-stack">
             {snapshot.attendanceTrends.map((point) => (
-              <div key={point.date} className="admin-trend-row">
-                <div className="admin-trend-label">
+              <div key={point.date} className="analytics-row">
+                <div className="analytics-copy">
                   <strong>{point.label}</strong>
-                  <span>
+                  <p className="muted-text">
                     {point.attendedCount}/{point.bookedCount} attended
-                  </span>
+                  </p>
                 </div>
-                <div className="admin-trend-bars">
-                  <span className="admin-trend-booked" style={{ width: getBarWidth(point.bookedCount, attendanceMax) }} />
-                  <span className="admin-trend-attended" style={{ width: getBarWidth(point.attendedCount, attendanceMax) }} />
+                <div className="analytics-bar-group">
+                  <span className="analytics-bar-track">
+                    <span className="analytics-bar-booked" style={{ width: getBarWidth(point.bookedCount, attendanceMax) }} />
+                  </span>
+                  <span className="analytics-bar-track">
+                    <span className="analytics-bar-attended" style={{ width: getBarWidth(point.attendedCount, attendanceMax) }} />
+                  </span>
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+      </LazySection>
+
+      <LazySection className="surface-grid surface-grid-3" delay={160}>
+        <article className="surface card-stack subtle-surface">
+          <div className="section-heading split-heading">
+            <h2 className="section-title">Engagement</h2>
+            <Zap size={18} />
+          </div>
+          <div className="list-stack">
+            <div className="list-row">
+              <strong>Logins</strong>
+              <span>{snapshot.engagement.totalLoginEvents7d}</span>
+            </div>
+            <div className="list-row">
+              <strong>Members who booked</strong>
+              <span>{snapshot.engagement.bookingMembers30d}</span>
+            </div>
+            <div className="list-row">
+              <strong>Challenge participants</strong>
+              <span>{snapshot.engagement.challengeParticipants}</span>
+            </div>
           </div>
         </article>
-      </section>
 
-      <section className="admin-analytics-grid">
-        <article className="dashboard-panel admin-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Member engagement</h2>
-              <p className="muted">Logins, booking activity, and challenge participation flowing into one owner view.</p>
-            </div>
-            <span className="status-pill live">
-              <Zap size={14} />
-              engagement
-            </span>
+        <article className="surface card-stack subtle-surface">
+          <div className="section-heading split-heading">
+            <h2 className="section-title">Revenue</h2>
+            <DollarSign size={18} />
           </div>
-
-          <div className="admin-kpi-grid">
-            <div className="insight-card">
-              <UserRound size={18} />
-              <strong>{snapshot.engagement.totalLoginEvents7d}</strong>
-              <p>Login events in the last 7 days.</p>
+          <div className="list-stack">
+            <div className="list-row">
+              <strong>Collected</strong>
+              <span>{formatNaira(snapshot.revenue.collected30d)}</span>
             </div>
-            <div className="insight-card">
-              <Target size={18} />
-              <strong>{snapshot.engagement.bookingMembers30d}</strong>
-              <p>Members who booked in the last 30 days.</p>
+            <div className="list-row">
+              <strong>Pending</strong>
+              <span>{formatNaira(snapshot.revenue.pending30d)}</span>
             </div>
-            <div className="insight-card">
-              <TrendingUp size={18} />
-              <strong>{snapshot.engagement.challengeParticipants}</strong>
-              <p>Members active in challenge boards.</p>
+            <div className="list-row">
+              <strong>Paid bookings</strong>
+              <span>{snapshot.revenue.paidBookings30d}</span>
             </div>
           </div>
+        </article>
 
-          <div className="admin-trend-list">
-            {snapshot.engagement.trend.map((point) => (
-              <div key={point.date} className="admin-trend-row">
-                <div className="admin-trend-label">
-                  <strong>{point.label}</strong>
-                  <span>
-                    {point.loginCount} logins · {point.bookingCount} bookings · {point.challengeCheckIns} challenge updates
-                  </span>
-                </div>
-                <div className="admin-trend-bars admin-trend-bars-triple">
-                  <span className="admin-trend-login" style={{ width: getBarWidth(point.loginCount, engagementMax) }} />
-                  <span className="admin-trend-booking" style={{ width: getBarWidth(point.bookingCount, engagementMax) }} />
-                  <span
-                    className="admin-trend-challenge"
-                    style={{ width: getBarWidth(point.challengeCheckIns, engagementMax) }}
-                  />
-                </div>
-              </div>
-            ))}
+        <article className="surface card-stack subtle-surface">
+          <div className="section-heading split-heading">
+            <h2 className="section-title">Renewals</h2>
+            <ShieldAlert size={18} />
           </div>
+          <div className="list-stack">
+            <div className="list-row">
+              <strong>Active</strong>
+              <span>{snapshot.renewals.active}</span>
+            </div>
+            <div className="list-row">
+              <strong>Renewing soon</strong>
+              <span>{snapshot.renewals.renewingSoon}</span>
+            </div>
+            <div className="list-row">
+              <strong>Past due</strong>
+              <span>{snapshot.renewals.pastDue}</span>
+            </div>
+          </div>
+        </article>
+      </LazySection>
 
-          <div className="admin-list compact">
-            {snapshot.engagement.topChallenges.map((challenge) => (
-              <div key={challenge.challengeId} className="admin-row">
-                <div className="admin-row-copy">
-                  <strong>{challenge.title}</strong>
-                  <span>
-                    {challenge.participants} members · {challenge.completions} completions
-                  </span>
-                </div>
-                <div className="admin-row-visual">
-                  <div className="admin-mini-bar">
-                    <span style={{ width: getBarWidth(challenge.completionRate, 100) }} />
+      <LazySection className="surface-grid surface-grid-2" delay={200}>
+        <section className="surface card-stack">
+          <div className="section-heading">
+            <span className="eyebrow">Due this week</span>
+            <h2 className="section-title">Renewal watchlist</h2>
+          </div>
+          <div className="list-stack">
+            {snapshot.renewals.dueThisWeek.length ? (
+              snapshot.renewals.dueThisWeek.map((profile) => (
+                <div key={profile.uid} className="list-row">
+                  <div>
+                    <strong>{profile.fullName}</strong>
+                    <p className="muted-text">{profile.plan}</p>
                   </div>
-                  <small>{challenge.completionRate}% completion rate</small>
+                  <span className="chip chip-soft">{formatShortDate(profile.renewalDate)}</span>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="muted-text">No renewals due this week.</p>
+            )}
           </div>
-        </article>
+        </section>
 
-        <article className="dashboard-panel admin-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Revenue pulse</h2>
-              <p className="muted">Collected versus pending value from recent bookings.</p>
-            </div>
-            <span className="status-pill live">
-              <DollarSign size={14} />
-              30-day window
-            </span>
+        <section className="surface card-stack">
+          <div className="section-heading">
+            <span className="eyebrow">Most valuable</span>
+            <h2 className="section-title">Top programs</h2>
           </div>
-
-          <div className="admin-kpi-grid">
-            <div className="insight-card">
-              <DollarSign size={18} />
-              <strong>{formatNaira(snapshot.revenue.collected30d)}</strong>
-              <p>Paid revenue collected.</p>
-            </div>
-            <div className="insight-card">
-              <ShieldAlert size={18} />
-              <strong>{formatNaira(snapshot.revenue.pending30d)}</strong>
-              <p>Pending or unpaid revenue.</p>
-            </div>
-            <div className="insight-card">
-              <BarChart3 size={18} />
-              <strong>{formatNaira(snapshot.revenue.averagePaidBookingValue)}</strong>
-              <p>Average paid booking value.</p>
-            </div>
-          </div>
-
-          <div className="admin-list">
+          <div className="list-stack">
             {snapshot.revenue.topPrograms.length ? (
               snapshot.revenue.topPrograms.map((program) => (
-                <div key={program.programId} className="admin-row">
-                  <div className="admin-row-copy">
+                <div key={program.programId} className="list-row">
+                  <div>
                     <strong>{program.programName}</strong>
-                    <span>
-                      {program.paidBookings} paid bookings · {formatNaira(program.revenue)}
-                    </span>
+                    <p className="muted-text">{program.paidBookings} paid bookings</p>
                   </div>
+                  <span>{formatNaira(program.revenue)}</span>
                 </div>
               ))
             ) : (
-              <p className="muted">Revenue insights will populate once paid bookings start coming through.</p>
+              <p className="muted-text">No program revenue yet.</p>
             )}
           </div>
-        </article>
-      </section>
-
-      <section className="dashboard-panel admin-panel">
-        <div className="panel-heading">
-          <div>
-            <h2>Membership renewal watch</h2>
-            <p className="muted">Spot upcoming renewals before they slip and keep overdue members visible.</p>
-          </div>
-          <span className="status-pill">{snapshot.renewals.pastDue} overdue</span>
-        </div>
-
-        <div className="admin-kpi-grid">
-          <div className="insight-card">
-            <Sparkles size={18} />
-            <strong>{snapshot.renewals.active}</strong>
-            <p>Members currently marked active.</p>
-          </div>
-          <div className="insight-card">
-            <CalendarClock size={18} />
-            <strong>{snapshot.renewals.renewingSoon}</strong>
-            <p>Members flagged as renewing soon.</p>
-          </div>
-          <div className="insight-card">
-            <ShieldAlert size={18} />
-            <strong>{snapshot.renewals.pastDue}</strong>
-            <p>Members already past due.</p>
-          </div>
-        </div>
-
-        <div className="admin-renewal-grid">
-          <div className="admin-member-list">
-            <div className="panel-heading">
-              <h2>Due this week</h2>
-              <span className="status-pill live">{snapshot.renewals.dueThisWeek.length}</span>
-            </div>
-
-            {snapshot.renewals.dueThisWeek.length ? (
-              snapshot.renewals.dueThisWeek.map((memberProfile) => (
-                <div key={memberProfile.uid} className="admin-member-card">
-                  <strong>{memberProfile.fullName}</strong>
-                  <span>
-                    {memberProfile.plan} · renews {formatShortDate(memberProfile.renewalDate)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="muted">No renewals due in the next 7 days.</p>
-            )}
-          </div>
-
-          <div className="admin-member-list">
-            <div className="panel-heading">
-              <h2>Past due</h2>
-              <span className="status-pill cancelled">{snapshot.renewals.overdueMembers.length}</span>
-            </div>
-
-            {snapshot.renewals.overdueMembers.length ? (
-              snapshot.renewals.overdueMembers.map((memberProfile) => (
-                <div key={memberProfile.uid} className="admin-member-card">
-                  <strong>{memberProfile.fullName}</strong>
-                  <span>
-                    {memberProfile.plan} · overdue since {formatShortDate(memberProfile.renewalDate)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="muted">No overdue renewals right now.</p>
-            )}
-          </div>
-        </div>
-
-        <p className="muted">
-          Latest review completed {formatLongDate(new Date().toISOString())}. As bookings, logins, and challenge rows
-          change in Supabase, this page refreshes automatically.
-        </p>
-      </section>
+        </section>
+      </LazySection>
     </main>
   );
 }

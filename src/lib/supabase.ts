@@ -45,6 +45,7 @@ import type {
   MembershipStatus,
   MembershipTier,
   NotificationPreferences,
+  PaymentVerification,
   WorkoutVideo
 } from "@/types/app";
 
@@ -758,6 +759,8 @@ function withScheduleAvailability(schedule: Omit<ClassSchedule, "openSpots" | "i
 }
 
 function classScheduleRowToSchedule(row: ClassScheduleRow): ClassSchedule {
+  const price = sessionPrograms.find((program) => program.id === row.program_id)?.price ?? 0;
+
   return withScheduleAvailability({
     id: row.id,
     programId: row.program_id,
@@ -767,6 +770,7 @@ function classScheduleRowToSchedule(row: ClassScheduleRow): ClassSchedule {
     location: row.location,
     startsAt: row.starts_at,
     durationMinutes: row.duration_minutes,
+    price,
     description: row.description ?? "",
     image: row.image ?? "/media/strength-zone.png",
     caloriesTarget: row.calories_target ?? 400,
@@ -964,6 +968,7 @@ function createDemoClassSchedules() {
       location: blueprint.location,
       startsAt: getDemoScheduleStartsAt(blueprint.daysAhead, blueprint.hour),
       durationMinutes: parseDurationMinutes(blueprint.program.duration),
+      price: blueprint.program.price,
       description: blueprint.program.description,
       image: blueprint.program.image,
       caloriesTarget: blueprint.caloriesTarget,
@@ -2420,6 +2425,8 @@ export async function createClassBooking(member: MemberProfile, schedule: ClassS
     throw new Error("This class is already full. Try another live slot.");
   }
 
+  const requiresPayment = schedule.price > 0;
+
   return createBookingRecord({
     memberId: member.uid,
     memberName: member.fullName,
@@ -2429,15 +2436,55 @@ export async function createClassBooking(member: MemberProfile, schedule: ClassS
     scheduledFor: schedule.startsAt,
     coach: schedule.trainer,
     focus: schedule.description,
-    amount: 0,
-    status: "confirmed",
-    paymentState: "disabled",
+    amount: schedule.price,
+    status: requiresPayment ? "awaiting-payment" : "confirmed",
+    paymentState: requiresPayment ? "unpaid" : "disabled",
     location: schedule.location,
     scheduleId: schedule.id,
     intensity: schedule.intensity,
     classImage: schedule.image,
     caloriesTarget: schedule.caloriesTarget
   });
+}
+
+export async function confirmBookingPayment(
+  booking: BookingRecord,
+  verification: PaymentVerification
+) {
+  const nextBooking: BookingRecord = {
+    ...booking,
+    status: verification.status === "success" ? "confirmed" : "awaiting-payment",
+    paymentState: verification.paymentState,
+    txRef: verification.txRef ?? booking.txRef,
+    transactionId: verification.transactionId ?? booking.transactionId
+  };
+
+  if (!supabaseEnabled || !supabase) {
+    updateDemoBooking(nextBooking);
+    await syncUpcomingSession(booking.memberId);
+    return nextBooking;
+  }
+
+  const { data, error } = await supabase
+    .from("bookings")
+    .update({
+      status: nextBooking.status,
+      payment_state: nextBooking.paymentState,
+      tx_ref: nextBooking.txRef ?? null,
+      transaction_id: nextBooking.transactionId ?? null
+    })
+    .eq("id", booking.id)
+    .eq("member_id", booking.memberId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const updatedBooking = bookingRowToRecord(data as BookingRow);
+  await syncUpcomingSession(booking.memberId);
+  return updatedBooking;
 }
 
 export async function cancelBookingRecord(booking: BookingRecord) {

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { Bell, CalendarDays, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Bell, CalendarDays, ShieldCheck, Sparkles } from "lucide-react";
+import { LazySection } from "@/components/lazy-section";
 import { useAuth } from "@/context/auth-context";
 import {
   getNotificationClientState,
@@ -29,12 +30,7 @@ export function SettingsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [pushState, setPushState] = useState<{
-    configured: boolean;
-    initialized: boolean;
-    permission: string;
-    pushSubscribed: boolean;
-  }>({
+  const [pushState, setPushState] = useState({
     configured: oneSignalEnabled,
     initialized: false,
     permission: "default",
@@ -55,16 +51,15 @@ export function SettingsPage() {
   }, []);
 
   if (loading) {
-    return <main className="route-shell centered-copy">Loading your notification settings...</main>;
+    return <main className="page page-width centered-state">Loading settings...</main>;
   }
 
   if (!member) {
     return (
-      <main className="route-shell centered-copy">
+      <main className="page page-width centered-state">
         <span className="eyebrow">Settings</span>
-        <h1>Create your member account to manage notifications.</h1>
-        <p>Notification controls are available once a user is signed in.</p>
-        <div className="stack-row">
+        <h1 className="page-title">Create an account to manage notifications.</h1>
+        <div className="action-row">
           <Link href="/signup" className="button button-primary">
             Create account
           </Link>
@@ -95,9 +90,9 @@ export function SettingsPage() {
         ...activeMember,
         notificationPreferences: preferences
       });
-      setMessage("Notification settings saved to your profile.");
+      setMessage("Settings saved.");
     } catch (settingsError) {
-      setError(settingsError instanceof Error ? settingsError.message : "Unable to save notification settings.");
+      setError(settingsError instanceof Error ? settingsError.message : "Unable to save settings.");
     } finally {
       setSaving(false);
     }
@@ -122,9 +117,9 @@ export function SettingsPage() {
         ...activeMember,
         notificationPreferences: nextPreferences
       });
-      setMessage("Push notifications are now enabled for this browser.");
+      setMessage("Push enabled.");
     } catch (settingsError) {
-      setError(settingsError instanceof Error ? settingsError.message : "Unable to enable push notifications.");
+      setError(settingsError instanceof Error ? settingsError.message : "Unable to enable push.");
     } finally {
       setSaving(false);
     }
@@ -148,68 +143,66 @@ export function SettingsPage() {
         ...activeMember,
         notificationPreferences: nextPreferences
       });
-      setMessage("Push notifications have been turned off for this browser.");
+      setMessage("Push disabled.");
     } catch (settingsError) {
-      setError(settingsError instanceof Error ? settingsError.message : "Unable to disable push notifications.");
+      setError(settingsError instanceof Error ? settingsError.message : "Unable to disable push.");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <main className="route-shell settings-shell">
-      <section className="dashboard-hero">
-        <div>
-          <span className="eyebrow">Settings</span>
-          <h1>Control reminders, nudges, and member alerts.</h1>
-          <p>
-            Notification preferences live in Supabase and are used by your Edge Function pipeline to send class reminders,
-            goal nudges, membership alerts, and special event broadcasts.
-          </p>
-        </div>
-
-        <div className="dashboard-actions">
-          <Link href="/dashboard" className="button button-secondary">
-            Back to dashboard
-          </Link>
-          <Link href="/book" className="button button-secondary">
-            Book a class
-          </Link>
-          <button type="button" className="button button-primary" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save settings"}
-          </button>
-        </div>
-      </section>
-
-      {message ? <p className="form-message">{message}</p> : null}
-      {error ? <p className="form-error">{error}</p> : null}
-
-      <section className="dashboard-content-grid settings-grid">
-        <article className="dashboard-panel settings-panel">
-          <div className="panel-heading">
-            <h2>Notification preferences</h2>
-            <span className={`status-pill ${preferences.enabled ? "live" : "disabled"}`}>
-              {preferences.enabled ? "notifications active" : "notifications paused"}
-            </span>
+    <main className="page page-width page-stack">
+      <LazySection className="surface hero-surface page-stack" delay={80}>
+        <div className="hero-grid compact-hero-grid">
+          <div className="card-stack">
+            <span className="eyebrow">Settings</span>
+            <h1 className="page-title">Notifications</h1>
+            <p className="page-copy">Choose which reminders and nudges you want to receive.</p>
+            <div className="chip-row">
+              <span className={`chip ${preferences.enabled ? "chip-positive" : "chip-soft"}`}>
+                {preferences.enabled ? "Notifications on" : "Notifications off"}
+              </span>
+              <span className={`chip ${pushState.pushSubscribed ? "chip-positive" : "chip-soft"}`}>
+                {pushState.pushSubscribed ? "Push enabled" : "Push off"}
+              </span>
+            </div>
           </div>
 
-          <div className="settings-toggle-list">
-            <label className="settings-toggle">
+          <div className="action-row">
+            <Link href="/dashboard" className="button button-secondary">
+              Dashboard
+            </Link>
+            <button type="button" className="button button-primary" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+
+        {message ? <p className="message message-success">{message}</p> : null}
+        {error ? <p className="message message-error">{error}</p> : null}
+      </LazySection>
+
+      <LazySection className="surface-grid surface-grid-2" delay={120}>
+        <section className="surface card-stack">
+          <div className="section-heading">
+            <span className="eyebrow">Preferences</span>
+            <h2 className="section-title">What should the app send?</h2>
+          </div>
+
+          <div className="list-stack">
+            <label className="toggle-card">
               <div>
                 <strong>Enable notifications</strong>
-                <span>Master switch for all reminder and motivation messages.</span>
+                <p className="muted-text">Master switch for all reminder messages.</p>
               </div>
-              <input
-                type="checkbox"
-                checked={preferences.enabled}
-                onChange={(event) => updatePreference("enabled", event.target.checked)}
-              />
+              <input type="checkbox" checked={preferences.enabled} onChange={(event) => updatePreference("enabled", event.target.checked)} />
             </label>
 
-            <label className="settings-toggle">
+            <label className="toggle-card">
               <div>
-                <strong>Upcoming class reminders</strong>
-                <span>Send reminders before booked classes begin.</span>
+                <strong>Class reminders</strong>
+                <p className="muted-text">Reminders for booked sessions.</p>
               </div>
               <input
                 type="checkbox"
@@ -219,10 +212,10 @@ export function SettingsPage() {
               />
             </label>
 
-            <label className="settings-toggle">
+            <label className="toggle-card">
               <div>
                 <strong>Goal nudges</strong>
-                <span>Send motivational nudges when weekly workout or calorie goals are close.</span>
+                <p className="muted-text">Encouragement around progress and streaks.</p>
               </div>
               <input
                 type="checkbox"
@@ -232,10 +225,10 @@ export function SettingsPage() {
               />
             </label>
 
-            <label className="settings-toggle">
+            <label className="toggle-card">
               <div>
                 <strong>Membership alerts</strong>
-                <span>Get renewal reminders and expiring membership alerts.</span>
+                <p className="muted-text">Renewal and expiring plan notices.</p>
               </div>
               <input
                 type="checkbox"
@@ -245,10 +238,10 @@ export function SettingsPage() {
               />
             </label>
 
-            <label className="settings-toggle">
+            <label className="toggle-card">
               <div>
                 <strong>Special events</strong>
-                <span>Hear about gym events, studio launches, and seasonal member activations.</span>
+                <p className="muted-text">Gym events and announcements.</p>
               </div>
               <input
                 type="checkbox"
@@ -258,91 +251,48 @@ export function SettingsPage() {
               />
             </label>
           </div>
-        </article>
+        </section>
 
-        <article className="dashboard-panel settings-panel">
-          <div className="panel-heading">
-            <h2>Push delivery</h2>
-            <span className={`status-pill ${pushState.pushSubscribed ? "live" : "disabled"}`}>
-              {pushState.pushSubscribed ? "push enabled" : "push off"}
-            </span>
+        <section className="surface card-stack">
+          <div className="section-heading">
+            <span className="eyebrow">Push delivery</span>
+            <h2 className="section-title">Browser permission</h2>
           </div>
 
-          <div className="settings-note-grid">
-            <article className="insight-card">
+          <div className="surface-grid surface-grid-3">
+            <article className="metric-card">
               <Bell size={18} />
-              <strong>{oneSignalEnabled ? "OneSignal connected" : "OneSignal not configured"}</strong>
-              <p>
-                {oneSignalEnabled
-                  ? "The browser SDK is ready to register this signed-in member for push delivery."
-                  : "Add NEXT_PUBLIC_ONESIGNAL_APP_ID before using browser push notifications."}
-              </p>
+              <strong className="metric-value">{oneSignalEnabled ? "Ready" : "Not ready"}</strong>
+              <span className="metric-label">Push service</span>
             </article>
-            <article className="insight-card">
+            <article className="metric-card">
               <ShieldCheck size={18} />
-              <strong>{pushState.permission}</strong>
-              <p>Current browser permission status for notifications.</p>
+              <strong className="metric-value">{pushState.permission}</strong>
+              <span className="metric-label">Permission</span>
             </article>
-            <article className="insight-card">
+            <article className="metric-card">
               <CalendarDays size={18} />
-              <strong>{preferences.pushSubscribed ? "Subscribed" : "Not subscribed"}</strong>
-              <p>Stored subscription state used by the notification pipeline.</p>
+              <strong className="metric-value">{preferences.pushSubscribed ? "On" : "Off"}</strong>
+              <span className="metric-label">Push state</span>
             </article>
           </div>
 
-          <div className="stack-row">
-            <button type="button" className="button button-primary" onClick={handlePushOptIn} disabled={saving || !oneSignalEnabled}>
-              Enable Push
+          <div className="action-row">
+            <button type="button" className="button button-primary compact-button" onClick={handlePushOptIn} disabled={saving || !oneSignalEnabled}>
+              Enable push
             </button>
-            <button type="button" className="button button-secondary" onClick={handlePushOptOut} disabled={saving || !oneSignalEnabled}>
-              Disable Push
+            <button type="button" className="button button-secondary compact-button" onClick={handlePushOptOut} disabled={saving || !oneSignalEnabled}>
+              Disable push
             </button>
           </div>
-        </article>
-      </section>
 
-      <section className="dashboard-summary-grid">
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Edge Function flow</h2>
-            <Sparkles size={18} />
-          </div>
-          <p className="muted">
-            Supabase Edge Functions read your stored preferences, scan bookings, progress, and renewals, then send only
-            the notifications you opted into.
+          <p className="muted-text">
+            {oneSignalEnabled
+              ? "Push connects to this signed-in browser."
+              : "Push is not ready on this browser yet."}
           </p>
-        </article>
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Membership safe</h2>
-            <ShieldCheck size={18} />
-          </div>
-          <p className="muted">
-            Renewal alerts can be turned off, but they stay separated from class nudges and special event messaging.
-          </p>
-        </article>
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Realtime ready</h2>
-            <Bell size={18} />
-          </div>
-          <p className="muted">Once a browser is subscribed, notifications can be targeted to this member without changing your UI flow.</p>
-        </article>
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Next steps</h2>
-            <Sparkles size={18} />
-          </div>
-          <div className="stack-row">
-            <Link href="/workouts" className="button button-secondary">
-              Open library
-            </Link>
-            <Link href="/community" className="button button-secondary">
-              Join community
-            </Link>
-          </div>
-        </article>
-      </section>
+        </section>
+      </LazySection>
     </main>
   );
 }

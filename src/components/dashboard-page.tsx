@@ -1,44 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { Bell, CalendarDays, CreditCard, Dumbbell, ShieldCheck, Trophy, UserRound } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
-import { Activity, Bell, CalendarDays, Flame, MessageSquare, PlayCircle, ShieldCheck, Target, Trophy, UserRound } from "lucide-react";
+import { LazySection } from "@/components/lazy-section";
 import { useAuth } from "@/context/auth-context";
 import {
   getDashboardSnapshot,
   isGymOwner,
   subscribeToMemberDashboard,
-  supabaseEnabled,
   type DashboardSnapshot
 } from "@/lib/supabase";
-import { formatLongDate, formatNaira, formatShortDate } from "@/lib/utils";
+import { formatLongDate, formatShortDate } from "@/lib/utils";
 import type { BookingRecord, MemberProfile, MemberProgress } from "@/types/app";
 
-const achievementMilestones = [
-  {
-    id: "first-class",
-    label: "First Burn",
-    description: "Complete your first coached class.",
-    threshold: 1
-  },
-  {
-    id: "momentum-builder",
-    label: "Momentum Builder",
-    description: "Finish 3 classes and lock in your habit.",
-    threshold: 3
-  },
-  {
-    id: "consistency-club",
-    label: "Consistency Club",
-    description: "Reach 6 completed classes in your training cycle.",
-    threshold: 6
-  },
-  {
-    id: "xfitness-elite",
-    label: "Xfitness Elite",
-    description: "Hit 10 completed classes to unlock legend status.",
-    threshold: 10
-  }
+const milestones = [
+  { label: "First class", threshold: 1 },
+  { label: "Momentum", threshold: 3 },
+  { label: "Consistency", threshold: 6 },
+  { label: "Elite", threshold: 10 }
 ];
 
 function createFallbackProgress(memberId: string): MemberProgress {
@@ -53,7 +33,7 @@ function createFallbackProgress(memberId: string): MemberProgress {
   };
 }
 
-function getProgressPercent(value: number, goal: number) {
+function getPercent(value: number, goal: number) {
   if (goal <= 0) {
     return 0;
   }
@@ -79,95 +59,72 @@ function getCompletedClasses(bookings: BookingRecord[], member: MemberProfile) {
   return Math.max(derivedCount, member.sessionsCompleted);
 }
 
-function getRenewalReminder(member: MemberProfile) {
+function getRenewalText(member: MemberProfile) {
   const renewalTime = new Date(member.renewalDate).getTime();
   const daysUntilRenewal = Number.isNaN(renewalTime)
     ? null
     : Math.ceil((renewalTime - Date.now()) / (1000 * 60 * 60 * 24));
 
   if (member.membershipStatus === "past-due" || (daysUntilRenewal !== null && daysUntilRenewal < 0)) {
-    const overdueDays = Math.abs(daysUntilRenewal ?? 0);
-
-    return {
-      tone: "late",
-      headline: "Membership overdue",
-      body: overdueDays ? `Renew now. You're ${overdueDays} day${overdueDays === 1 ? "" : "s"} overdue.` : "Renew now to restore active access."
-    };
+    return "Renew now";
   }
 
   if (member.membershipStatus === "renewing-soon" || (daysUntilRenewal !== null && daysUntilRenewal <= 7)) {
-    return {
-      tone: "soon",
-      headline: "Renewal coming up",
-      body:
-        daysUntilRenewal === null
-          ? "Your plan renewal is approaching."
-          : `Your ${member.plan} plan renews in ${daysUntilRenewal} day${daysUntilRenewal === 1 ? "" : "s"}.`
-    };
+    return `Renews in ${daysUntilRenewal ?? 0} day${daysUntilRenewal === 1 ? "" : "s"}`;
   }
 
-  return {
-    tone: "active",
-    headline: "Membership active",
-    body: `Your ${member.plan} plan is active through ${formatShortDate(member.renewalDate)}.`
-  };
+  return `Active until ${formatShortDate(member.renewalDate)}`;
 }
 
 function ProgressRing({
   label,
   value,
   goal,
-  suffix,
   accent
 }: {
   label: string;
   value: number;
   goal: number;
-  suffix: string;
   accent: string;
 }) {
-  const percentage = getProgressPercent(value, goal);
-  const radius = 68;
+  const percent = getPercent(value, goal);
+  const radius = 54;
   const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference - (percentage / 100) * circumference;
+  const dashOffset = circumference - (percent / 100) * circumference;
 
   return (
-    <article className="progress-card" style={{ "--ring-accent": accent } as CSSProperties}>
-      <div className="progress-ring-shell">
-        <svg viewBox="0 0 180 180" className="progress-ring" aria-hidden="true">
-          <circle className="progress-ring-track" cx="90" cy="90" r={radius} />
+    <article className="surface rail-card ring-card" style={{ "--ring-accent": accent } as CSSProperties}>
+      <div className="ring-visual">
+        <svg viewBox="0 0 150 150" className="ring-svg" aria-hidden="true">
+          <circle cx="75" cy="75" r={radius} className="ring-track" />
           <circle
-            className="progress-ring-fill"
-            cx="90"
-            cy="90"
+            cx="75"
+            cy="75"
             r={radius}
+            className="ring-fill"
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
           />
         </svg>
-        <div className="progress-ring-content">
-          <strong>{percentage}%</strong>
+        <div className="ring-center">
+          <strong>{percent}%</strong>
           <span>{label}</span>
         </div>
       </div>
-      <div className="progress-card-copy">
-        <strong>
-          {value}
-          {suffix}
+
+      <div className="split-line">
+        <strong className="card-title">
+          {value}/{goal}
         </strong>
-        <span>
-          Goal: {goal}
-          {suffix}
-        </span>
+        <span className="chip chip-soft">This week</span>
       </div>
     </article>
   );
 }
 
 export function DashboardPage() {
-  const { member, loading, signOut } = useAuth();
+  const { member, loading } = useAuth();
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
-  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -178,18 +135,14 @@ export function DashboardPage() {
 
     let active = true;
 
-    const loadDashboardSnapshot = async () => {
-      setSyncing(true);
-
+    const loadSnapshot = async () => {
       try {
         const nextSnapshot = await getDashboardSnapshot(member.uid);
         if (!active) {
           return;
         }
 
-        if (nextSnapshot) {
-          setSnapshot(nextSnapshot);
-        }
+        setSnapshot(nextSnapshot);
         setError("");
       } catch (dashboardError) {
         if (!active) {
@@ -197,17 +150,13 @@ export function DashboardPage() {
         }
 
         setError(dashboardError instanceof Error ? dashboardError.message : "Unable to refresh your dashboard.");
-      } finally {
-        if (active) {
-          setSyncing(false);
-        }
       }
     };
 
-    void loadDashboardSnapshot();
+    void loadSnapshot();
 
     const unsubscribe = subscribeToMemberDashboard(member.uid, () => {
-      void loadDashboardSnapshot();
+      void loadSnapshot();
     });
 
     return () => {
@@ -217,16 +166,15 @@ export function DashboardPage() {
   }, [member]);
 
   if (loading) {
-    return <main className="route-shell centered-copy">Loading your dashboard...</main>;
+    return <main className="page page-width centered-state">Loading your dashboard...</main>;
   }
 
   if (!member) {
     return (
-      <main className="route-shell centered-copy">
+      <main className="page page-width centered-state">
         <span className="eyebrow">Dashboard</span>
-        <h1>Create your member account to unlock the dashboard.</h1>
-        <p>The profile, booking history, and payment state live here once a user is authenticated.</p>
-        <div className="stack-row">
+        <h1 className="page-title">Create an account to open your dashboard.</h1>
+        <div className="action-row">
           <Link href="/signup" className="button button-primary">
             Create account
           </Link>
@@ -238,373 +186,200 @@ export function DashboardPage() {
     );
   }
 
-  const dashboardMember = snapshot?.member ?? member;
+  const activeMember = snapshot?.member ?? member;
   const progress = snapshot?.progress ?? createFallbackProgress(member.uid);
   const bookings = snapshot?.bookings ?? [];
-  const renewalReminder = getRenewalReminder(dashboardMember);
-  const completedClasses = getCompletedClasses(bookings, dashboardMember);
-  const latestBookings = bookings.slice(0, 5);
-  const nextUpcomingBooking = [...bookings]
-    .filter((booking) => booking.status !== "cancelled" && new Date(booking.scheduledFor).getTime() > Date.now())
+  const completedClasses = getCompletedClasses(bookings, activeMember);
+  const pendingPayments = bookings.filter(
+    (booking) => booking.status === "awaiting-payment" || booking.paymentState === "unpaid"
+  );
+  const upcomingBooking = [...bookings]
+    .filter((booking) => booking.status !== "cancelled")
     .sort((left, right) => new Date(left.scheduledFor).getTime() - new Date(right.scheduledFor).getTime())[0];
-  const notificationsReady =
-    dashboardMember.notificationPreferences.enabled && dashboardMember.notificationPreferences.pushSubscribed;
-  const journeyCards = [
+  const latestBookings = [...bookings].slice(0, 5);
+  const unlockedBadges = milestones.filter((badge) => completedClasses >= badge.threshold);
+  const quickLinks = [
     {
-      id: "profile",
-      eyebrow: "Profile & quiz",
-      title: "Personal profile is ready",
-      body: `Your goal is ${dashboardMember.quiz.goal.toLowerCase()} and your preferred training style is ${dashboardMember.quiz.preferredWorkoutType.toLowerCase()}.`,
-      href: "/dashboard",
-      cta: "Review dashboard",
-      done: true,
-      icon: UserRound
-    },
-    {
-      id: "notifications",
-      eyebrow: "Push reminders",
-      title: notificationsReady ? "Reminders are turned on" : "Enable nudges and reminders",
-      body: notificationsReady
-        ? "Class reminders, goal nudges, and renewal alerts can reach this member account."
-        : "Visit settings to connect browser push and store your reminder preferences.",
-      href: "/settings",
-      cta: notificationsReady ? "Adjust settings" : "Enable notifications",
-      done: notificationsReady,
-      icon: Bell
-    },
-    {
-      id: "booking",
-      eyebrow: "Book a class",
-      title: nextUpcomingBooking ? "Next coached class booked" : "Reserve your next coached session",
-      body: nextUpcomingBooking
-        ? `${nextUpcomingBooking.programName} is scheduled for ${formatLongDate(nextUpcomingBooking.scheduledFor)}.`
-        : "Open the booking studio to grab a live slot with realtime availability.",
       href: "/book",
-      cta: nextUpcomingBooking ? "Manage bookings" : "Book now",
-      done: Boolean(nextUpcomingBooking),
+      label: "Book class",
       icon: CalendarDays
     },
     {
-      id: "workouts",
-      eyebrow: "Workout library",
-      title: "Train between coached classes",
-      body: "Open the on-demand library to complete video routines that feed your weekly progress rings.",
       href: "/workouts",
-      cta: "Open library",
-      done: false,
-      icon: PlayCircle
+      label: "Workouts",
+      icon: Dumbbell
     },
     {
-      id: "community",
-      eyebrow: "Community",
-      title: "Join challenges and member discussion",
-      body: "Take part in challenge leaderboards, share progress socially, and post inside the live forum.",
       href: "/community",
-      cta: "Open community",
-      done: false,
-      icon: MessageSquare
+      label: "Community",
+      icon: Trophy
+    },
+    {
+      href: "/settings",
+      label: "Settings",
+      icon: Bell
     }
   ];
 
-  if (isGymOwner(dashboardMember)) {
-    journeyCards.push({
-      id: "owner",
-      eyebrow: "Owner analytics",
-      title: "Owner console unlocked",
-      body: "Your account can open class demand, engagement, renewal, and revenue insights.",
+  if (isGymOwner(activeMember)) {
+    quickLinks.push({
       href: "/admin",
-      cta: "Open admin dashboard",
-      done: true,
+      label: "Admin",
       icon: ShieldCheck
     });
   }
 
   return (
-    <main className="route-shell dashboard-shell">
-      <section className="dashboard-hero">
-        <div>
-          <span className="eyebrow">Member Dashboard</span>
-          <h1>Your live fitness command center.</h1>
-          <p>
-            Welcome back, {dashboardMember.fullName.split(" ")[0]}. This page listens to your Supabase profile,
-            progress, and bookings in real time, so your member view stays current without a refresh.
-          </p>
-          <div className="dashboard-status-row">
-            <span className={`status-pill ${supabaseEnabled ? "live" : "disabled"}`}>
-              {supabaseEnabled ? (syncing ? "syncing realtime data" : "realtime from supabase") : "demo fallback"}
-            </span>
-            <span className={`renewal-pill ${renewalReminder.tone}`}>{renewalReminder.headline}</span>
+    <main className="page page-width page-stack">
+      <LazySection className="surface hero-surface page-stack" delay={120}>
+        <div className="hero-grid compact-hero-grid">
+          <div className="card-stack">
+            <span className="eyebrow">Dashboard</span>
+            <h1 className="page-title">Hi, {activeMember.fullName.split(" ")[0]}</h1>
+            <p className="page-copy">
+              {activeMember.plan} plan
+              <span className="page-copy-separator">•</span>
+              {getRenewalText(activeMember)}
+            </p>
           </div>
-        </div>
 
-        <div className="dashboard-actions">
-          {isGymOwner(member) ? (
-            <Link href="/admin" className="button button-secondary">
-              Owner console
+          <div className="action-row">
+            <Link href="/book" className="button button-primary">
+              Book
             </Link>
-          ) : null}
-          <Link href="/community" className="button button-secondary">
-            Community hub
-          </Link>
-          <Link href="/workouts" className="button button-secondary">
-            Workout library
-          </Link>
-          <Link href="/book" className="button button-primary">
-            Book new session
-          </Link>
-          <Link href="/settings" className="button button-secondary">
-            Notification settings
-          </Link>
-          <button type="button" className="button button-secondary" onClick={() => signOut()}>
-            Sign out
-          </button>
-        </div>
-      </section>
-
-      {error ? <p className="form-error dashboard-alert">{error}</p> : null}
-
-      <section className="metrics-grid">
-        <article className="metric-card">
-          <UserRound size={20} />
-          <strong>{dashboardMember.plan}</strong>
-          <span>Membership plan</span>
-        </article>
-        <article className="metric-card">
-          <ShieldCheck size={20} />
-          <strong>{dashboardMember.membershipStatus.replace("-", " ")}</strong>
-          <span>Current membership status</span>
-        </article>
-        <article className="metric-card">
-          <CalendarDays size={20} />
-          <strong>{formatShortDate(dashboardMember.renewalDate)}</strong>
-          <span>Renewal date</span>
-        </article>
-        <article className="metric-card">
-          <Trophy size={20} />
-          <strong>{completedClasses}</strong>
-          <span>Completed classes</span>
-        </article>
-      </section>
-
-      <section className="dashboard-panel">
-        <div className="panel-heading">
-          <div>
-            <h2>Member Journey</h2>
-            <p className="muted">Each step in the product now flows into the next, from setup through community momentum.</p>
+            <Link href="/workouts" className="button button-secondary">
+              Workouts
+            </Link>
           </div>
-          <span className="status-pill live">{journeyCards.length} journey steps</span>
         </div>
 
-        <div className="journey-grid">
-          {journeyCards.map((card) => {
-            const Icon = card.icon;
+        {error ? <p className="message message-error">{error}</p> : null}
+
+        {upcomingBooking ? (
+          <div className="surface subtle-surface compact-summary">
+            <strong>Next class</strong>
+            <span>{upcomingBooking.programName}</span>
+            <small>{formatLongDate(upcomingBooking.scheduledFor)}</small>
+          </div>
+        ) : null}
+      </LazySection>
+
+      <LazySection className="section-stack" delay={240}>
+        <div className="section-heading">
+          <span className="eyebrow">Today</span>
+          <h2 className="section-title">Your snapshot</h2>
+        </div>
+
+        <div className="section-rail">
+          <article className="surface rail-card metric-card">
+            <UserRound size={18} />
+            <strong className="metric-value">{activeMember.streakDays}</strong>
+            <span className="metric-label">Day streak</span>
+          </article>
+          <article className="surface rail-card metric-card">
+            <CalendarDays size={18} />
+            <strong className="metric-value">{bookings.filter((booking) => booking.status !== "cancelled").length}</strong>
+            <span className="metric-label">Bookings</span>
+          </article>
+          <article className="surface rail-card metric-card">
+            <Dumbbell size={18} />
+            <strong className="metric-value">{completedClasses}</strong>
+            <span className="metric-label">Completed</span>
+          </article>
+          <article className="surface rail-card metric-card">
+            <CreditCard size={18} />
+            <strong className="metric-value">{pendingPayments.length}</strong>
+            <span className="metric-label">To pay</span>
+          </article>
+        </div>
+      </LazySection>
+
+      <LazySection className="section-stack" delay={320}>
+        <div className="section-heading">
+          <span className="eyebrow">Progress</span>
+          <h2 className="section-title">Keep it moving</h2>
+        </div>
+
+        <div className="section-rail">
+          <ProgressRing
+            label="Workouts"
+            value={progress.weeklyWorkoutsCompleted}
+            goal={progress.weeklyWorkoutGoal}
+            accent="#12b886"
+          />
+          <ProgressRing
+            label="Calories"
+            value={progress.weeklyCaloriesBurned}
+            goal={progress.weeklyCalorieGoal}
+            accent="#f59f00"
+          />
+          <article className="surface rail-card card-stack">
+            <span className="eyebrow">Badges</span>
+            <strong className="card-title">{unlockedBadges.length} unlocked</strong>
+            <div className="chip-row">
+              {milestones.map((badge) => (
+                <span
+                  key={badge.label}
+                  className={`chip ${unlockedBadges.some((item) => item.label === badge.label) ? "chip-positive" : "chip-soft"}`}
+                >
+                  {badge.label}
+                </span>
+              ))}
+            </div>
+          </article>
+        </div>
+      </LazySection>
+
+      <LazySection className="section-stack" delay={420}>
+        <div className="section-heading">
+          <span className="eyebrow">Shortcuts</span>
+          <h2 className="section-title">Open a page</h2>
+        </div>
+
+        <div className="section-rail">
+          {quickLinks.map((link) => {
+            const Icon = link.icon;
 
             return (
-              <article key={card.id} className="journey-card">
-                <div className="journey-card-heading">
-                  <div>
-                    <span className="eyebrow">{card.eyebrow}</span>
-                    <strong>{card.title}</strong>
-                  </div>
-                  <span className={`status-pill ${card.done ? "completed" : "disabled"}`}>
-                    <Icon size={14} />
-                    {card.done ? "ready" : "next"}
-                  </span>
-                </div>
-                <p>{card.body}</p>
-                <div className="journey-card-footer">
-                  <Link href={card.href}>{card.cta}</Link>
-                </div>
-              </article>
+              <Link key={link.href} href={link.href} className="surface rail-card action-card">
+                <Icon size={18} />
+                <strong>{link.label}</strong>
+              </Link>
             );
           })}
         </div>
-      </section>
+      </LazySection>
 
-      <section className="dashboard-focus-grid">
-        <article className="dashboard-panel progress-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Weekly progress</h2>
-              <p className="muted">Week of {formatShortDate(progress.weekStart)}</p>
-            </div>
-            <span className="status-pill live">auto-updating</span>
+      <LazySection className="section-stack" delay={520}>
+        <div className="section-heading split-heading">
+          <div>
+            <span className="eyebrow">Recent</span>
+            <h2 className="section-title">Bookings</h2>
           </div>
+          <Link href="/book" className="inline-link">
+            View all
+          </Link>
+        </div>
 
-          <div className="progress-ring-grid">
-            <ProgressRing
-              label="Workouts"
-              value={progress.weeklyWorkoutsCompleted}
-              goal={progress.weeklyWorkoutGoal}
-              suffix=""
-              accent="#ff7a3d"
-            />
-            <ProgressRing
-              label="Calories"
-              value={progress.weeklyCaloriesBurned}
-              goal={progress.weeklyCalorieGoal}
-              suffix=" cal"
-              accent="#c0ff4f"
-            />
-          </div>
-
-          <div className={`renewal-card ${renewalReminder.tone}`}>
-            <div>
-              <span className="eyebrow">Renewal Reminder</span>
-              <strong>{renewalReminder.headline}</strong>
-            </div>
-            <p>{renewalReminder.body}</p>
-          </div>
-        </article>
-
-        <article className="dashboard-panel achievements-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Achievements</h2>
-              <p className="muted">Badges unlock as completed classes stack up.</p>
-            </div>
-            <span className="status-pill">{completedClasses} classes</span>
-          </div>
-
-          <div className="achievement-grid">
-            {achievementMilestones.map((badge) => {
-              const earned = completedClasses >= badge.threshold;
-
-              return (
-                <article key={badge.id} className={earned ? "achievement-card earned" : "achievement-card"}>
-                  <div className="achievement-icon">
-                    <Trophy size={18} />
-                  </div>
-                  <div className="achievement-copy">
-                    <strong>{badge.label}</strong>
-                    <p>{badge.description}</p>
-                  </div>
-                  <span className={earned ? "status-pill paid" : "status-pill disabled"}>
-                    {earned ? "unlocked" : `${completedClasses}/${badge.threshold}`}
-                  </span>
-                </article>
-              );
-            })}
-          </div>
-        </article>
-      </section>
-
-      <section className="dashboard-content-grid">
-        <article className="dashboard-panel profile-panel">
-          <div className="panel-heading">
-            <h2>Member profile</h2>
-            <span className="status-pill">{supabaseEnabled ? "profile live" : "demo fallback"}</span>
-          </div>
-          <div className="profile-card">
-            <div className="avatar-orb">{dashboardMember.fullName.slice(0, 2).toUpperCase()}</div>
-            <div>
-              <strong>{dashboardMember.fullName}</strong>
-              <span>{dashboardMember.email}</span>
-            </div>
-          </div>
-          <dl className="profile-details">
-            <div>
-              <dt>Goal</dt>
-              <dd>{dashboardMember.quiz.goal}</dd>
-            </div>
-            <div>
-              <dt>Preferred workout</dt>
-              <dd>{dashboardMember.quiz.preferredWorkoutType}</dd>
-            </div>
-            <div>
-              <dt>Home club</dt>
-              <dd>{dashboardMember.homeClub}</dd>
-            </div>
-            <div>
-              <dt>Experience</dt>
-              <dd>{dashboardMember.experienceLevel}</dd>
-            </div>
-            <div>
-              <dt>Membership</dt>
-              <dd>
-                {dashboardMember.plan} · {dashboardMember.membershipStatus.replace("-", " ")}
-              </dd>
-            </div>
-            <div>
-              <dt>Renews</dt>
-              <dd>{formatShortDate(dashboardMember.renewalDate)}</dd>
-            </div>
-          </dl>
-        </article>
-
-        <article className="dashboard-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Recent bookings</h2>
-              <p className="muted">
-                {dashboardMember.upcomingSession
-                  ? `Next coached session: ${formatLongDate(dashboardMember.upcomingSession)}`
-                  : "Book a session to see your training calendar here."}
-              </p>
-            </div>
-            <Link href="/book">Reserve another</Link>
-          </div>
-          <div className="booking-history">
-            {latestBookings.length ? (
-              latestBookings.map((booking) => {
-                const bookingBadge =
-                  booking.status === "confirmed" || booking.status === "completed" || booking.status === "cancelled"
-                    ? booking.status
-                    : booking.paymentState;
-
-                return (
-                  <div key={booking.id} className="history-row">
-                    <div>
-                      <strong>{booking.programName}</strong>
-                      <span>
-                        {formatLongDate(booking.scheduledFor)} · {booking.coach}
-                      </span>
-                    </div>
-                    <div className="history-price">
-                      <span>{booking.amount > 0 ? formatNaira(booking.amount) : "Included in membership"}</span>
-                      <span className={`status-pill ${bookingBadge}`}>{bookingBadge.replace("-", " ")}</span>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="muted">No bookings yet. Use the booking page to schedule your first session.</p>
-            )}
-          </div>
-        </article>
-      </section>
-
-      <section className="dashboard-summary-grid">
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Workout target</h2>
-            <Target size={18} />
-          </div>
-          <p className="muted">
-            {progress.weeklyWorkoutGoal - progress.weeklyWorkoutsCompleted > 0
-              ? `${progress.weeklyWorkoutGoal - progress.weeklyWorkoutsCompleted} workout${progress.weeklyWorkoutGoal - progress.weeklyWorkoutsCompleted === 1 ? "" : "s"} left to hit your weekly target.`
-              : "Weekly workout target reached. Keep pushing."}
-          </p>
-        </article>
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Calorie burn</h2>
-            <Flame size={18} />
-          </div>
-          <p className="muted">
-            {progress.weeklyCalorieGoal - progress.weeklyCaloriesBurned > 0
-              ? `${progress.weeklyCalorieGoal - progress.weeklyCaloriesBurned} calories left to close your weekly burn goal.`
-              : "You've cleared your weekly calorie target. Great work."}
-          </p>
-        </article>
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Consistency streak</h2>
-            <Activity size={18} />
-          </div>
-          <p className="muted">{dashboardMember.streakDays} active days and counting. Stay on schedule to keep the streak alive.</p>
-        </article>
-      </section>
+        <div className="section-rail">
+          {latestBookings.length ? (
+            latestBookings.map((booking) => (
+              <article key={booking.id} className="surface rail-card card-stack">
+                <strong className="card-title">{booking.programName}</strong>
+                <span className="muted-text">{formatLongDate(booking.scheduledFor)}</span>
+                <span className="chip chip-soft">{booking.status.replace("-", " ")}</span>
+              </article>
+            ))
+          ) : (
+            <article className="surface rail-card card-stack">
+              <strong className="card-title">No bookings yet</strong>
+              <Link href="/book" className="inline-link">
+                Book a class
+              </Link>
+            </article>
+          )}
+        </div>
+      </LazySection>
     </main>
   );
 }

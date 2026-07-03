@@ -138,6 +138,7 @@ export type ClassSchedule = {
   location: string;
   startsAt: string;
   durationMinutes: number;
+  price: number;
   description: string;
   image: string;
   caloriesTarget: number;

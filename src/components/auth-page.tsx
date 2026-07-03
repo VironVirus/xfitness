@@ -2,12 +2,32 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ShieldCheck, Sparkles, Target } from "lucide-react";
 import { useState } from "react";
+import { LazySection } from "@/components/lazy-section";
 import { useAuth } from "@/context/auth-context";
 
 type AuthPageProps = {
   mode: "login" | "signup";
 };
+
+const benefits = [
+  {
+    icon: ShieldCheck,
+    title: "Secure access",
+    body: "Sign in with your email and password."
+  },
+  {
+    icon: Target,
+    title: "Personal setup",
+    body: "Save your goal and preferred training style."
+  },
+  {
+    icon: Sparkles,
+    title: "Connected journey",
+    body: "Bookings, workouts, badges, and community stay linked."
+  }
+];
 
 export function AuthPage({ mode }: AuthPageProps) {
   const router = useRouter();
@@ -38,7 +58,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         });
 
         if (result.requiresEmailConfirmation) {
-          setMessage(`Check ${email} to confirm your account, then sign in to open your dashboard.`);
+          setMessage(`Check ${email} to confirm your account, then sign in.`);
           return;
         }
 
@@ -52,62 +72,68 @@ export function AuthPage({ mode }: AuthPageProps) {
   }
 
   return (
-    <main className="auth-shell">
-      <section className="auth-panel media-panel">
-        <div className="eyebrow">Member Access</div>
-        <h1>{mode === "login" ? "Welcome back to the club." : "Create your Xfitness profile."}</h1>
-        <p>
-          {mode === "login"
-            ? "Sign in with your email and password to open your personalized fitness dashboard."
-            : "Create your account, answer a quick fitness quiz, and save your profile to Supabase Auth and your member database."}
-        </p>
-        <div className="auth-highlight-grid">
-          <article>
-            <strong>Supabase Auth</strong>
-            <span>Email and password sign-in with profile-based access</span>
-          </article>
-          <article>
-            <strong>Fitness Quiz</strong>
-            <span>Store goals and workout preferences in each member profile</span>
-          </article>
-          <article>
-            <strong>Dashboard</strong>
-            <span>Redirect members to a personalized experience after login</span>
-          </article>
-        </div>
-      </section>
+    <main className="page page-width auth-page">
+      <LazySection className="auth-layout" delay={80}>
+        <section className="surface card-stack auth-summary-card">
+          <span className="eyebrow">Member access</span>
+          <h1 className="page-title">{mode === "login" ? "Welcome back" : "Create your account"}</h1>
+          <p className="page-copy">
+            {mode === "login"
+              ? "Open your dashboard, bookings, workouts, and community progress."
+              : "Start with a short quiz so the app can shape your dashboard and workout recommendations."}
+          </p>
 
-      <section className="auth-panel form-panel">
-        <div className="auth-heading-row">
-          <div>
-            <span className="eyebrow">{mode === "login" ? "Sign In" : "Sign Up"}</span>
-            <h2>{mode === "login" ? "Member login" : "Join the movement"}</h2>
+          <div className="list-stack">
+            {benefits.map((benefit) => {
+              const Icon = benefit.icon;
+
+              return (
+                <article key={benefit.title} className="list-card">
+                  <Icon size={18} />
+                  <div>
+                    <strong>{benefit.title}</strong>
+                    <p className="muted-text">{benefit.body}</p>
+                  </div>
+                </article>
+              );
+            })}
           </div>
-          <Link href="/" className="button button-secondary">
-            Back home
-          </Link>
-        </div>
+        </section>
 
-        <form
-          className="auth-form"
-          action={async (formData) => {
-            await handleSubmit(formData);
-          }}
-        >
-          {mode === "signup" ? (
-            <>
-              <label>
-                <span>Full name</span>
-                <input type="text" name="fullName" placeholder="Adaeze Okafor" required />
-              </label>
+        <section className="surface card-stack form-card">
+          <div className="split-heading">
+            <div className="section-heading">
+              <span className="eyebrow">{mode === "login" ? "Sign in" : "Sign up"}</span>
+              <h2 className="section-title">{mode === "login" ? "Continue training" : "Set up your profile"}</h2>
+            </div>
+            <Link href="/" className="button button-secondary compact-button">
+              Back home
+            </Link>
+          </div>
 
-              <label>
-                <span>Fitness goal</span>
-                <input type="text" name="goal" placeholder="Build strength and tone my lower body" required />
-              </label>
+          <form
+            className="form-stack"
+            action={async (formData) => {
+              await handleSubmit(formData);
+            }}
+          >
+            {mode === "signup" ? (
+              <div className="field-grid">
+                <label className="field">
+                  <span>Full name</span>
+                  <input type="text" name="fullName" placeholder="Adaeze Okafor" required />
+                </label>
 
-              <label>
-                <span>Preferred workout type</span>
+                <label className="field">
+                  <span>Fitness goal</span>
+                  <input type="text" name="goal" placeholder="Build strength" required />
+                </label>
+              </div>
+            ) : null}
+
+            {mode === "signup" ? (
+              <label className="field">
+                <span>Preferred workout</span>
                 <select name="preferredWorkoutType" defaultValue="Strength training" required>
                   <option value="Strength training">Strength training</option>
                   <option value="HIIT and cardio">HIIT and cardio</option>
@@ -116,34 +142,34 @@ export function AuthPage({ mode }: AuthPageProps) {
                   <option value="Athletic performance">Athletic performance</option>
                 </select>
               </label>
-            </>
-          ) : null}
+            ) : null}
 
-          <label>
-            <span>Email address</span>
-            <input type="email" name="email" placeholder="you@example.com" required />
-          </label>
+            <label className="field">
+              <span>Email</span>
+              <input type="email" name="email" placeholder="you@example.com" required />
+            </label>
 
-          <label>
-            <span>Password</span>
-            <input type="password" name="password" placeholder="At least 8 characters" minLength={8} required />
-          </label>
+            <label className="field">
+              <span>Password</span>
+              <input type="password" name="password" placeholder="At least 8 characters" minLength={8} required />
+            </label>
 
-          {message ? <p className="form-message">{message}</p> : null}
-          {error ? <p className="form-error">{error}</p> : null}
+            {message ? <p className="message message-success">{message}</p> : null}
+            {error ? <p className="message message-error">{error}</p> : null}
 
-          <button type="submit" className="button button-primary" disabled={loading}>
-            {loading ? "Working..." : mode === "login" ? "Log in to dashboard" : "Create account and save quiz"}
-          </button>
-        </form>
+            <button type="submit" className="button button-primary full-width-button" disabled={loading}>
+              {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
+            </button>
+          </form>
 
-        <p className="auth-footer">
-          {mode === "login" ? "Need an account?" : "Already a member?"}{" "}
-          <Link href={mode === "login" ? "/signup" : "/login"}>
-            {mode === "login" ? "Create one now" : "Sign in here"}
-          </Link>
-        </p>
-      </section>
+          <p className="footnote">
+            {mode === "login" ? "Need an account?" : "Already have an account?"}{" "}
+            <Link href={mode === "login" ? "/signup" : "/login"}>
+              {mode === "login" ? "Create one" : "Sign in"}
+            </Link>
+          </p>
+        </section>
+      </LazySection>
     </main>
   );
 }

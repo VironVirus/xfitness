@@ -1,20 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { Instagram, MessageSquare, Send, Share2, Trophy, Video } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  Flame,
-  Instagram,
-  MessageSquare,
-  Send,
-  Share2,
-  Sparkles,
-  Target,
-  Trophy,
-  UserRound,
-  Video
-} from "lucide-react";
+import { LazySection } from "@/components/lazy-section";
 import { useAuth } from "@/context/auth-context";
 import {
   createCommunityComment,
@@ -23,17 +12,16 @@ import {
   joinCommunityChallenge,
   saveChallengeProgress,
   subscribeToCommunity,
-  supabaseEnabled,
   type CommunitySnapshot
 } from "@/lib/supabase";
-import { formatLongDate, formatShortDate } from "@/lib/utils";
+import { formatShortDate } from "@/lib/utils";
 import type {
   CommunityChallenge,
   CommunityForumThread,
   MemberChallengeProgress
 } from "@/types/app";
 
-const defaultThreadCategories = ["General", "Challenges", "Social", "Recovery", "Wins"];
+const defaultThreadCategories = ["General", "Challenges", "Wins", "Recovery"];
 
 function getChallengePercent(progressValue: number, targetValue: number) {
   if (targetValue <= 0) {
@@ -55,20 +43,7 @@ function getLeaderboard(entries: MemberChallengeProgress[], challengeId: string)
     });
 }
 
-function getCommentCountMap(threads: CommunityForumThread[], comments: CommunitySnapshot["comments"]) {
-  return threads.reduce((map, thread) => {
-    map.set(
-      thread.id,
-      comments.filter((comment) => comment.threadId === thread.id).length
-    );
-    return map;
-  }, new Map<string, number>());
-}
-
-function upsertChallengeProgress(
-  entries: MemberChallengeProgress[],
-  nextEntry: MemberChallengeProgress
-) {
+function upsertChallengeProgress(entries: MemberChallengeProgress[], nextEntry: MemberChallengeProgress) {
   const remainingEntries = entries.filter((entry) => {
     return !(entry.memberId === nextEntry.memberId && entry.challengeId === nextEntry.challengeId);
   });
@@ -90,7 +65,6 @@ function appendComment(comments: CommunitySnapshot["comments"], nextComment: Com
 export function CommunityPage() {
   const { member, loading } = useAuth();
   const [snapshot, setSnapshot] = useState<CommunitySnapshot | null>(null);
-  const [loadingData, setLoadingData] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [workingKey, setWorkingKey] = useState("");
@@ -113,8 +87,6 @@ export function CommunityPage() {
     let active = true;
 
     const loadCommunity = async () => {
-      setLoadingData(true);
-
       try {
         const nextSnapshot = await getCommunitySnapshot();
         if (!active) {
@@ -128,11 +100,7 @@ export function CommunityPage() {
           return;
         }
 
-        setError(communityError instanceof Error ? communityError.message : "Unable to load the community section.");
-      } finally {
-        if (active) {
-          setLoadingData(false);
-        }
+        setError(communityError instanceof Error ? communityError.message : "Unable to load community.");
       }
     };
 
@@ -170,16 +138,15 @@ export function CommunityPage() {
   }, [selectedThreadId, snapshot?.threads]);
 
   if (loading) {
-    return <main className="route-shell centered-copy">Loading the Xfitness community...</main>;
+    return <main className="page page-width centered-state">Loading community...</main>;
   }
 
   if (!member) {
     return (
-      <main className="route-shell centered-copy">
+      <main className="page page-width centered-state">
         <span className="eyebrow">Community</span>
-        <h1>Create your member account to unlock challenges and live discussion.</h1>
-        <p>Join leaderboard events, track progress, and jump into the community feed once your member profile is active.</p>
-        <div className="stack-row">
+        <h1 className="page-title">Create an account to join challenges and comments.</h1>
+        <div className="action-row">
           <Link href="/signup" className="button button-primary">
             Create account
           </Link>
@@ -192,6 +159,7 @@ export function CommunityPage() {
   }
 
   const activeMember = member;
+
   const challenges = snapshot?.challenges ?? [];
   const threads = snapshot?.threads ?? [];
   const comments = snapshot?.comments ?? [];
@@ -203,16 +171,10 @@ export function CommunityPage() {
 
     return map;
   }, new Map<string, MemberChallengeProgress>());
-  const sortedChallenges = [...challenges].sort((left, right) => Number(right.featured) - Number(left.featured));
-  const selectedChallenge =
-    sortedChallenges.find((challenge) => challenge.id === selectedChallengeId) ?? sortedChallenges[0] ?? null;
-  const leaderboard = selectedChallenge ? getLeaderboard(challengeProgress, selectedChallenge.id) : [];
+  const selectedChallenge = challenges.find((challenge) => challenge.id === selectedChallengeId) ?? challenges[0] ?? null;
   const selectedThread = threads.find((thread) => thread.id === selectedThreadId) ?? threads[0] ?? null;
-  const threadComments = selectedThread
-    ? comments.filter((comment) => comment.threadId === selectedThread.id)
-    : [];
-  const threadCategories = Array.from(new Set([...defaultThreadCategories, ...threads.map((thread) => thread.category)]));
-  const commentCountMap = getCommentCountMap(threads, comments);
+  const leaderboard = selectedChallenge ? getLeaderboard(challengeProgress, selectedChallenge.id) : [];
+  const threadComments = selectedThread ? comments.filter((comment) => comment.threadId === selectedThread.id) : [];
   const joinedCount = memberProgressMap.size;
   const completedChallenges = [...memberProgressMap.values()].filter((entry) => {
     const challenge = challenges.find((item) => item.id === entry.challengeId);
@@ -244,9 +206,9 @@ export function CommunityPage() {
         };
       });
       updateProgressInput(challenge.id, String(nextProgress.progressValue));
-      setMessage(`You joined ${challenge.title}. Log your first check-in to appear on the leaderboard.`);
+      setMessage(`Joined ${challenge.title}.`);
     } catch (challengeError) {
-      setError(challengeError instanceof Error ? challengeError.message : "Unable to join this challenge right now.");
+      setError(challengeError instanceof Error ? challengeError.message : "Unable to join challenge.");
     } finally {
       setWorkingKey("");
     }
@@ -257,7 +219,7 @@ export function CommunityPage() {
     const parsedValue = Number(rawValue);
 
     if (!Number.isFinite(parsedValue) || parsedValue < 0) {
-      setError(`Enter a valid ${challenge.metricLabel.toLowerCase()} value before saving.`);
+      setError(`Enter a valid ${challenge.metricLabel.toLowerCase()} value.`);
       return;
     }
 
@@ -278,9 +240,9 @@ export function CommunityPage() {
         };
       });
       updateProgressInput(challenge.id, String(nextProgress.progressValue));
-      setMessage(`${challenge.title} progress updated. Leaderboard and streak data are now live.`);
+      setMessage(`${challenge.title} updated.`);
     } catch (challengeError) {
-      setError(challengeError instanceof Error ? challengeError.message : "Unable to save your progress.");
+      setError(challengeError instanceof Error ? challengeError.message : "Unable to save progress.");
     } finally {
       setWorkingKey("");
     }
@@ -294,21 +256,21 @@ export function CommunityPage() {
     const memberChallengeProgress = memberProgressMap.get(selectedChallenge.id);
     const shareUrl = `${window.location.origin}/community`;
     const shareText = memberChallengeProgress
-      ? `I'm at ${memberChallengeProgress.progressValue} ${selectedChallenge.metricUnit} in the ${selectedChallenge.title} on Xfitness. ${selectedChallenge.shareHashtag}`
-      : `I just joined the ${selectedChallenge.title} on Xfitness. ${selectedChallenge.shareHashtag}`;
+      ? `I'm at ${memberChallengeProgress.progressValue} ${selectedChallenge.metricUnit} in ${selectedChallenge.title}. ${selectedChallenge.shareHashtag}`
+      : `I just joined ${selectedChallenge.title}. ${selectedChallenge.shareHashtag}`;
 
     try {
       await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
       window.open(platform === "instagram" ? "https://www.instagram.com/" : "https://www.tiktok.com/", "_blank", "noopener,noreferrer");
-      setMessage(`Share caption copied. Finish your post in ${platform === "instagram" ? "Instagram" : "TikTok"}.`);
+      setMessage(`Share text copied for ${platform === "instagram" ? "Instagram" : "TikTok"}.`);
     } catch {
-      setError("Unable to prepare social share right now.");
+      setError("Unable to prepare social share.");
     }
   }
 
   async function handleCreateThread() {
     if (!threadForm.title.trim() || !threadForm.body.trim()) {
-      setError("Add both a thread title and a discussion prompt before posting.");
+      setError("Add a title and message.");
       return;
     }
 
@@ -338,9 +300,9 @@ export function CommunityPage() {
         body: "",
         category: threadForm.category
       });
-      setMessage("Your thread is live. Members will see replies here in real time.");
+      setMessage("Discussion posted.");
     } catch (threadError) {
-      setError(threadError instanceof Error ? threadError.message : "Unable to create this thread.");
+      setError(threadError instanceof Error ? threadError.message : "Unable to create discussion.");
     } finally {
       setWorkingKey("");
     }
@@ -348,7 +310,7 @@ export function CommunityPage() {
 
   async function handleCreateComment() {
     if (!selectedThread || !commentBody.trim()) {
-      setError("Write a reply before posting to the discussion.");
+      setError("Write a comment first.");
       return;
     }
 
@@ -369,427 +331,295 @@ export function CommunityPage() {
         };
       });
       setCommentBody("");
-      setMessage("Reply posted. Everyone in the forum will see it update live.");
+      setMessage("Comment sent.");
     } catch (commentError) {
-      setError(commentError instanceof Error ? commentError.message : "Unable to post this reply.");
+      setError(commentError instanceof Error ? commentError.message : "Unable to send comment.");
     } finally {
       setWorkingKey("");
     }
   }
 
   return (
-    <main className="route-shell community-layout">
-      <section className="community-main">
-        <section className="community-hero">
-          <div>
+    <main className="page page-width page-stack">
+      <LazySection className="surface hero-surface page-stack" delay={80}>
+        <div className="hero-grid compact-hero-grid">
+          <div className="card-stack">
             <span className="eyebrow">Community</span>
-            <h1>Challenge each other, share your progress, and talk live while the leaderboard moves.</h1>
-            <p className="section-copy">
-              The Xfitness community section blends coaching challenges, social momentum, and a live member forum into
-              one place. Join events, log progress, and watch updates stream in through Supabase Realtime.
-            </p>
-            <div className="dashboard-status-row">
-              <span className={`status-pill ${supabaseEnabled ? "live" : "disabled"}`}>
-                {supabaseEnabled ? (loadingData ? "syncing community data" : "realtime from supabase") : "demo fallback"}
-              </span>
-              <span className="status-pill">{challenges.length} active challenges</span>
-              <span className="status-pill">{threads.length} live forum threads</span>
+            <h1 className="page-title">Challenges and chat</h1>
+            <p className="page-copy">Join a challenge, update your score, or post a comment.</p>
+            <div className="chip-row">
+              <span className="chip">{joinedCount} joined</span>
+              <span className="chip">{completedChallenges} completed</span>
             </div>
           </div>
 
-          <div className="dashboard-actions">
-            <Link href="/dashboard" className="button button-secondary">
-              Back to dashboard
+          <div className="action-row">
+            <Link href="/workouts" className="button button-secondary">
+              Workouts
             </Link>
-            <Link href="/settings" className="button button-secondary">
-              Notification settings
-            </Link>
-            <Link href="/workouts" className="button button-primary">
-              Open workouts
+            <Link href="/dashboard" className="button button-primary">
+              Dashboard
             </Link>
           </div>
-        </section>
+        </div>
 
-        {message ? <p className="form-message">{message}</p> : null}
-        {error ? <p className="form-error">{error}</p> : null}
+        {message ? <p className="message message-success">{message}</p> : null}
+        {error ? <p className="message message-error">{error}</p> : null}
 
-        <section className="community-challenge-grid">
-          {sortedChallenges.map((challenge) => {
-            const memberChallengeProgress = memberProgressMap.get(challenge.id);
-            const progressValue = memberChallengeProgress?.progressValue ?? 0;
-            const joined = Boolean(memberChallengeProgress);
-            const percent = getChallengePercent(progressValue, challenge.targetValue);
-            const joinKey = `join:${challenge.id}`;
+        <div className="surface-grid surface-grid-3">
+          <article className="metric-card">
+            <Trophy size={18} />
+            <strong className="metric-value">{challenges.length}</strong>
+            <span className="metric-label">Challenges</span>
+          </article>
+          <article className="metric-card">
+            <MessageSquare size={18} />
+            <strong className="metric-value">{threads.length}</strong>
+            <span className="metric-label">Threads</span>
+          </article>
+          <article className="metric-card">
+            <Send size={18} />
+            <strong className="metric-value">{comments.length}</strong>
+            <span className="metric-label">Comments</span>
+          </article>
+        </div>
+      </LazySection>
+
+      <LazySection className="surface section-stack" delay={120}>
+        <div className="section-heading">
+          <span className="eyebrow">Challenges</span>
+          <h2 className="section-title">Join and track progress</h2>
+        </div>
+
+        <div className="surface-grid surface-grid-3">
+          {challenges.map((challenge) => {
+            const progress = memberProgressMap.get(challenge.id);
+            const percent = progress ? getChallengePercent(progress.progressValue, challenge.targetValue) : 0;
             const progressKey = `progress:${challenge.id}`;
+            const joinKey = `join:${challenge.id}`;
 
             return (
               <article
                 key={challenge.id}
-                className={selectedChallenge?.id === challenge.id ? "community-challenge-card selected" : "community-challenge-card"}
+                className={`surface card-stack subtle-surface challenge-card${selectedChallenge?.id === challenge.id ? " challenge-card-active" : ""}`}
               >
-                <button
-                  type="button"
-                  className="community-challenge-select"
-                  onClick={() => setSelectedChallengeId(challenge.id)}
-                >
-                  <div className="community-challenge-media">
-                    <Image
-                      src={challenge.coverImage}
-                      alt={challenge.title}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 360px"
-                    />
+                <button type="button" className="card-select-button" onClick={() => setSelectedChallengeId(challenge.id)}>
+                  <div className="split-line">
+                    <strong className="card-title">{challenge.title}</strong>
+                    <span className="chip chip-soft">{challenge.durationDays} days</span>
                   </div>
+                  <p className="muted-text">{challenge.description}</p>
                 </button>
 
-                <div className="community-challenge-copy">
-                  <div className="community-challenge-heading">
-                    <div>
-                      <span className="eyebrow">{challenge.metricLabel}</span>
-                      <h2>{challenge.title}</h2>
-                    </div>
-                    {challenge.featured ? (
-                      <span className="status-pill live">
-                        <Sparkles size={14} />
-                        Featured
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <p>{challenge.description}</p>
-
-                  <div className="community-meta-grid">
-                    <span>
-                      <Target size={16} />
-                      Target: {challenge.targetValue} {challenge.metricUnit}
-                    </span>
-                    <span>
-                      <Trophy size={16} />
-                      {challengeProgress.filter((entry) => entry.challengeId === challenge.id).length} members joined
-                    </span>
-                    <span>
-                      <Flame size={16} />
-                      {challenge.durationDays} day run
-                    </span>
-                    <span>
-                      <Video size={16} />
-                      Ends {formatShortDate(challenge.endsAt)}
-                    </span>
-                  </div>
-
-                  <div className="community-progress-shell">
-                    <div className="community-progress-bar">
-                      <span style={{ width: `${percent}%` }} />
-                    </div>
-                    <div className="community-progress-caption">
-                      <strong>
-                        {progressValue} / {challenge.targetValue} {challenge.metricUnit}
-                      </strong>
-                      <span>{joined ? `${percent}% to target` : "Join to start tracking"}</span>
-                    </div>
-                  </div>
-
-                  <div className="community-challenge-actions">
-                    {joined ? (
-                      <>
-                        <label className="community-progress-input">
-                          <span>Log your latest {challenge.metricLabel.toLowerCase()}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={progressInputs[challenge.id] ?? String(progressValue)}
-                            onChange={(event) => updateProgressInput(challenge.id, event.target.value)}
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          className="button button-primary"
-                          onClick={() => handleSaveProgress(challenge)}
-                          disabled={workingKey === progressKey}
-                        >
-                          {workingKey === progressKey ? "Saving..." : "Save progress"}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        className="button button-primary"
-                        onClick={() => handleJoinChallenge(challenge)}
-                        disabled={workingKey === joinKey}
-                      >
-                        {workingKey === joinKey ? "Joining..." : "Join challenge"}
-                      </button>
-                    )}
-                  </div>
+                <div className="progress-strip">
+                  <span className="progress-fill" style={{ width: `${percent}%` }} />
                 </div>
+
+                <div className="split-line">
+                  <span className="chip chip-accent">
+                    {progress ? `${progress.progressValue}/${challenge.targetValue} ${challenge.metricUnit}` : challenge.metricLabel}
+                  </span>
+                  <span className="chip chip-soft">{percent}%</span>
+                </div>
+
+                {progress ? (
+                  <div className="field-grid field-grid-wide">
+                    <label className="field">
+                      <span>{challenge.metricLabel}</span>
+                      <input
+                        inputMode="numeric"
+                        value={progressInputs[challenge.id] ?? String(progress.progressValue)}
+                        onChange={(event) => updateProgressInput(challenge.id, event.target.value)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="button button-primary compact-button"
+                      onClick={() => handleSaveProgress(challenge)}
+                      disabled={workingKey === progressKey}
+                    >
+                      {workingKey === progressKey ? "Saving..." : "Update"}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="button button-primary"
+                    onClick={() => handleJoinChallenge(challenge)}
+                    disabled={workingKey === joinKey}
+                  >
+                    {workingKey === joinKey ? "Joining..." : "Join challenge"}
+                  </button>
+                )}
               </article>
             );
           })}
+        </div>
+      </LazySection>
+
+      <LazySection className="surface-grid surface-grid-2" delay={160}>
+        <section className="surface card-stack">
+          <div className="section-heading split-heading">
+            <div>
+              <span className="eyebrow">Leaderboard</span>
+              <h2 className="section-title">{selectedChallenge?.title ?? "Challenge board"}</h2>
+            </div>
+            {selectedChallenge ? <span className="chip chip-soft">{selectedChallenge.metricUnit}</span> : null}
+          </div>
+
+          {leaderboard.length ? (
+            <div className="list-stack">
+              {leaderboard.slice(0, 8).map((entry, index) => (
+                <div key={`${entry.memberId}-${entry.challengeId}`} className="list-row leaderboard-row">
+                  <div>
+                    <strong>
+                      {index + 1}. {entry.memberName}
+                    </strong>
+                    <p className="muted-text">Updated {formatShortDate(entry.updatedAt)}</p>
+                  </div>
+                  <span className="chip chip-accent">
+                    {entry.progressValue} {selectedChallenge?.metricUnit}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted-text">No entries yet.</p>
+          )}
         </section>
 
-        {selectedChallenge ? (
-          <section className="community-detail-grid">
-            <article className="dashboard-panel community-leaderboard-panel">
-              <div className="panel-heading">
-                <div>
-                  <h2>{selectedChallenge.title} leaderboard</h2>
-                  <p className="muted">{selectedChallenge.sharePrompt}</p>
-                </div>
-                <span className="status-pill">{selectedChallenge.shareHashtag}</span>
-              </div>
-
-              <div className="community-leaderboard-list">
-                {leaderboard.length ? (
-                  leaderboard.slice(0, 8).map((entry, index) => (
-                    <div key={`${entry.memberId}:${entry.challengeId}`} className="community-leaderboard-row">
-                      <div>
-                        <strong>
-                          #{index + 1} {entry.memberName}
-                        </strong>
-                        <span>
-                          {entry.streakDays} day streak
-                          {entry.lastCheckInAt ? ` · Updated ${formatShortDate(entry.lastCheckInAt)}` : ""}
-                        </span>
-                      </div>
-                      <div className="history-price">
-                        <strong>
-                          {entry.progressValue} {selectedChallenge.metricUnit}
-                        </strong>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="muted">No leaderboard entries yet. Join the challenge to become the first member on the board.</p>
-                )}
-              </div>
-            </article>
-
-            <article className="dashboard-panel community-share-panel">
-              <div className="panel-heading">
-                <div>
-                  <h2>Share your run</h2>
-                  <p className="muted">Copy a ready-to-post caption and finish the share in your social app of choice.</p>
-                </div>
-                <span className="status-pill live">
-                  <Share2 size={14} />
-                  social ready
-                </span>
-              </div>
-
-              <div className="community-share-grid">
-                <button type="button" className="button button-secondary" onClick={() => handleSocialShare("instagram")}>
-                  <Instagram size={18} />
-                  Share to Instagram
-                </button>
-                <button type="button" className="button button-secondary" onClick={() => handleSocialShare("tiktok")}>
-                  <Video size={18} />
-                  Share to TikTok
-                </button>
-              </div>
-
-              <p className="muted">
-                The share caption includes your challenge name, current progress, the community hashtag, and a link back
-                to the Xfitness community page.
-              </p>
-            </article>
-          </section>
-        ) : null}
-
-        <section className="community-forum-grid">
-          <article className="dashboard-panel community-thread-compose">
-            <div className="panel-heading">
-              <div>
-                <h2>Start a discussion</h2>
-                <p className="muted">Ask for tips, celebrate wins, or pull the community into your next challenge sprint.</p>
-              </div>
-              <span className="status-pill live">
-                <MessageSquare size={14} />
-                live forum
-              </span>
+        <section className="surface card-stack">
+          <div className="section-heading split-heading">
+            <div>
+              <span className="eyebrow">Share</span>
+              <h2 className="section-title">Instagram or TikTok</h2>
             </div>
+            <Share2 size={18} />
+          </div>
 
-            <div className="community-compose-fields">
-              <label className="auth-form">
+          <p className="muted-text">{selectedChallenge?.sharePrompt ?? "Pick a challenge to prepare a share caption."}</p>
+
+          <div className="action-row">
+            <button type="button" className="button button-secondary compact-button" onClick={() => handleSocialShare("instagram")}>
+              <Instagram size={16} />
+              <span>Instagram</span>
+            </button>
+            <button type="button" className="button button-secondary compact-button" onClick={() => handleSocialShare("tiktok")}>
+              <Video size={16} />
+              <span>TikTok</span>
+            </button>
+          </div>
+        </section>
+      </LazySection>
+
+      <LazySection className="surface-grid surface-grid-2 community-grid" delay={200}>
+        <section className="surface card-stack">
+          <div className="section-heading">
+            <span className="eyebrow">New thread</span>
+            <h2 className="section-title">Start a discussion</h2>
+          </div>
+
+          <div className="form-stack">
+            <div className="field-grid">
+              <label className="field">
+                <span>Title</span>
+                <input
+                  value={threadForm.title}
+                  onChange={(event) => setThreadForm((current) => ({ ...current, title: event.target.value }))}
+                  placeholder="Share a win"
+                />
+              </label>
+
+              <label className="field">
                 <span>Category</span>
                 <select
                   value={threadForm.category}
                   onChange={(event) => setThreadForm((current) => ({ ...current, category: event.target.value }))}
                 >
-                  {threadCategories.map((category) => (
+                  {defaultThreadCategories.map((category) => (
                     <option key={category} value={category}>
                       {category}
                     </option>
                   ))}
                 </select>
               </label>
+            </div>
 
-              <label className="auth-form">
-                <span>Thread title</span>
-                <input
-                  type="text"
-                  value={threadForm.title}
-                  onChange={(event) => setThreadForm((current) => ({ ...current, title: event.target.value }))}
-                  placeholder="What is helping you improve this week?"
-                />
-              </label>
+            <label className="field">
+              <span>Message</span>
+              <textarea
+                rows={4}
+                value={threadForm.body}
+                onChange={(event) => setThreadForm((current) => ({ ...current, body: event.target.value }))}
+                placeholder="What do you want to talk about?"
+              />
+            </label>
 
-              <label className="auth-form">
-                <span>Prompt or question</span>
-                <textarea
-                  rows={4}
-                  value={threadForm.body}
-                  onChange={(event) => setThreadForm((current) => ({ ...current, body: event.target.value }))}
-                  placeholder="Share your context so members know how to help."
-                />
-              </label>
+            <button type="button" className="button button-primary" onClick={handleCreateThread} disabled={workingKey === "thread:create"}>
+              {workingKey === "thread:create" ? "Posting..." : "Post thread"}
+            </button>
+          </div>
 
+          <div className="list-stack">
+            {threads.map((thread) => (
               <button
+                key={thread.id}
                 type="button"
-                className="button button-primary"
-                onClick={handleCreateThread}
-                disabled={workingKey === "thread:create"}
+                className={`thread-card${selectedThread?.id === thread.id ? " thread-card-active" : ""}`}
+                onClick={() => setSelectedThreadId(thread.id)}
               >
-                {workingKey === "thread:create" ? "Posting..." : "Post thread"}
+                <div className="split-line">
+                  <strong>{thread.title}</strong>
+                  <span className="chip chip-soft">{thread.category}</span>
+                </div>
+                <p className="muted-text">{thread.body}</p>
               </button>
-            </div>
-          </article>
-
-          <article className="dashboard-panel community-thread-list-panel">
-            <div className="panel-heading">
-              <h2>Active threads</h2>
-              <span className="status-pill">{threads.length} open</span>
-            </div>
-
-            <div className="community-thread-list">
-              {threads.length ? (
-                threads.map((thread) => (
-                  <button
-                    key={thread.id}
-                    type="button"
-                    className={selectedThread?.id === thread.id ? "community-thread-card active" : "community-thread-card"}
-                    onClick={() => setSelectedThreadId(thread.id)}
-                  >
-                    <div className="community-thread-card-heading">
-                      <strong>{thread.title}</strong>
-                      <span className="status-pill">{thread.category}</span>
-                    </div>
-                    <p>{thread.body}</p>
-                    <div className="community-thread-meta">
-                      <span>{thread.memberName}</span>
-                      <span>{commentCountMap.get(thread.id) ?? 0} replies</span>
-                      <span>{formatShortDate(thread.createdAt)}</span>
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <p className="muted">No threads yet. Start the first conversation and the community feed will fill from there.</p>
-              )}
-            </div>
-          </article>
+            ))}
+          </div>
         </section>
-      </section>
 
-      <aside className="community-sidebar">
-        <article className="dashboard-panel community-sidebar-card">
-          <div className="panel-heading">
-            <h2>Your momentum</h2>
-            <span className="status-pill live">member view</span>
-          </div>
-          <div className="workout-summary-grid">
-            <div className="insight-card">
-              <Trophy size={18} />
-              <strong>{joinedCount}</strong>
-              <p>Challenges joined so far.</p>
+        <section className="surface card-stack">
+          <div className="section-heading split-heading">
+            <div>
+              <span className="eyebrow">Comments</span>
+              <h2 className="section-title">{selectedThread?.title ?? "Select a thread"}</h2>
             </div>
-            <div className="insight-card">
-              <Flame size={18} />
-              <strong>{Math.max(0, ...[...memberProgressMap.values()].map((entry) => entry.streakDays), 0)}</strong>
-              <p>Your longest active challenge streak.</p>
-            </div>
-            <div className="insight-card">
-              <Target size={18} />
-              <strong>{completedChallenges}</strong>
-              <p>Challenges completed against the target.</p>
-            </div>
-          </div>
-        </article>
-
-        <article className="dashboard-panel community-sidebar-card">
-          <div className="panel-heading">
-            <h2>Selected thread</h2>
-            <span className="status-pill">{selectedThread ? `${threadComments.length} replies` : "pick one"}</span>
+            {selectedThread ? <span className="chip chip-soft">{threadComments.length} comments</span> : null}
           </div>
 
-          {selectedThread ? (
-            <>
-              <div className="community-selected-thread">
-                <strong>{selectedThread.title}</strong>
-                <span>
-                  {selectedThread.memberName} · {selectedThread.category} · {formatLongDate(selectedThread.createdAt)}
-                </span>
-                <p>{selectedThread.body}</p>
-              </div>
+          {selectedThread ? <p className="muted-text">{selectedThread.body}</p> : null}
 
-              <div className="community-comment-list">
-                {threadComments.length ? (
-                  threadComments.map((comment) => (
-                    <div key={comment.id} className="community-comment-card">
-                      <strong>{comment.memberName}</strong>
-                      <span>{formatLongDate(comment.createdAt)}</span>
-                      <p>{comment.body}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="muted">No replies yet. Add the first response and the thread will update live for everyone.</p>
-                )}
-              </div>
-
-              <label className="auth-form">
-                <span>Reply to thread</span>
-                <textarea
-                  rows={4}
-                  value={commentBody}
-                  onChange={(event) => setCommentBody(event.target.value)}
-                  placeholder="Add your perspective, tip, or encouragement."
-                />
-              </label>
-
-              <button
-                type="button"
-                className="button button-primary"
-                onClick={handleCreateComment}
-                disabled={workingKey === "comment:create"}
-              >
-                {workingKey === "comment:create" ? "Posting..." : "Post reply"}
-              </button>
-            </>
-          ) : (
-            <p className="muted">Select a thread from the left to read replies and join the conversation.</p>
-          )}
-        </article>
-
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Forum updates</h2>
-            <Send size={18} />
+          <div className="list-stack comment-list">
+            {threadComments.length ? (
+              threadComments.map((comment) => (
+                <article key={comment.id} className="comment-card">
+                  <div className="split-line">
+                    <strong>{comment.memberName}</strong>
+                    <span className="muted-text">{formatShortDate(comment.createdAt)}</span>
+                  </div>
+                  <p>{comment.body}</p>
+                </article>
+              ))
+            ) : (
+              <p className="muted-text">No comments yet.</p>
+            )}
           </div>
-          <p className="muted">
-            New threads and comments stream into the page with Supabase Realtime, so members do not need to refresh to
-            follow the conversation.
-          </p>
-        </article>
 
-        <article className="dashboard-panel compact-panel">
-          <div className="panel-heading">
-            <h2>Creator loop</h2>
-            <UserRound size={18} />
-          </div>
-          <p className="muted">
-            Use the Instagram and TikTok share helpers to copy a caption, open the platform, and keep the community
-            challenge visible outside the app.
-          </p>
-        </article>
-      </aside>
+          <label className="field">
+            <span>Reply</span>
+            <textarea
+              rows={4}
+              value={commentBody}
+              onChange={(event) => setCommentBody(event.target.value)}
+              placeholder="Add your comment"
+            />
+          </label>
+
+          <button type="button" className="button button-primary" onClick={handleCreateComment} disabled={workingKey === "comment:create"}>
+            {workingKey === "comment:create" ? "Sending..." : "Send comment"}
+          </button>
+        </section>
+      </LazySection>
     </main>
   );
 }
